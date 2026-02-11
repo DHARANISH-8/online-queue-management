@@ -2,37 +2,55 @@ package com.queue.backend.queue;
 
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
+
+import com.queue.backend.user.entity.User;
+import com.queue.backend.user.repository.UserRepository;
 
 @Service
 public class QueueService {
 
     private final QueueRepository queueRepository;
+    private final UserRepository userRepository;
 
-    public QueueService(QueueRepository queueRepository) {
+    public QueueService(QueueRepository queueRepository,
+                        UserRepository userRepository) {
         this.queueRepository = queueRepository;
+        this.userRepository = userRepository;
     }
 
-    // Generate new token
+    // ✅ Generate Token (AUTO INCREMENT SAFE)
     public QueueToken generateToken(Long userId) {
 
-        long waitingCount = queueRepository.countByStatus(QueueStatus.WAITING);
-        int nextToken = (int) waitingCount + 1;
+        if (userId == null) {
+            throw new RuntimeException("User ID cannot be null");
+        }
+
+        // Fetch user from DB
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Get last token
+        Optional<QueueToken> lastTokenOpt = queueRepository.findFirstByOrderByTokenNumberDesc();
+        
+        int nextToken = lastTokenOpt.isPresent() ? lastTokenOpt.get().getTokenNumber() + 1 : 1;
 
         QueueToken token = new QueueToken(
                 nextToken,
                 QueueStatus.WAITING,
-                userId
+                user
         );
 
         return queueRepository.save(token);
     }
 
-    // Get waiting queue
+    // ✅ Get waiting queue
     public List<QueueToken> getWaitingQueue() {
-        return queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
+        return queueRepository
+                .findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
     }
 
-    // Serve next token
+    // ✅ Serve next token
     public QueueToken serveNext() {
 
         List<QueueToken> waitingList =
@@ -47,5 +65,30 @@ public class QueueService {
 
         return queueRepository.save(token);
     }
-}
 
+    // ✅ Get token by ID
+    public QueueToken getTokenById(Long tokenId) {
+        if (tokenId == null) {
+            throw new RuntimeException("Token ID cannot be null");
+        }
+        return queueRepository.findById(tokenId)
+                .orElseThrow(() -> new RuntimeException("Token not found with ID: " + tokenId));
+    }
+
+    // ✅ Update token status by ID
+    public QueueToken updateTokenStatus(Long tokenId, QueueStatus newStatus) {
+        if (tokenId == null) {
+            throw new RuntimeException("Token ID cannot be null");
+        }
+        QueueToken token = queueRepository.findById(tokenId)
+                .orElseThrow(() -> new RuntimeException("Token not found with ID: " + tokenId));
+        
+        token.setStatus(newStatus);
+        return queueRepository.save(token);
+    }
+
+    // ✅ Get queue count by status
+    public long getQueueCountByStatus(QueueStatus status) {
+        return queueRepository.countByStatus(status);
+    }
+}

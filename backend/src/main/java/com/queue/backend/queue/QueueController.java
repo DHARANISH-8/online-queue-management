@@ -30,4 +30,22 @@ public class QueueController {
     public QueueToken serveNext() {
         return queueService.serveNext();
     }
+
+    // Get token by ID
+    @GetMapping("/{tokenId}")
+    public QueueToken getToken(@PathVariable Long tokenId) {
+        return queueService.getTokenById(tokenId);
+    }
+
+    // Update token status
+    @PutMapping("/{tokenId}/status")
+    public QueueToken updateStatus(@PathVariable Long tokenId, @RequestBody QueueStatus newStatus) {
+        return queueService.updateTokenStatus(tokenId, newStatus);
+    }
+
+    // Get queue statistics
+    @GetMapping("/stats/count")
+    public long getQueueCount(@RequestParam QueueStatus status) {
+        return queueService.getQueueCountByStatus(status);
+    }
 }
