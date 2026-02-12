@@ -1,5 +1,7 @@
 package com.queue.backend.counter.entity;
 
-public class CounterStatus {
-    
+public enum CounterStatus {
+    OPEN,
+    CLOSED,
+    BUSY
 }

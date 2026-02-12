@@ -2,6 +2,7 @@ package com.queue.backend.queue;
 
 import jakarta.persistence.*;
 import com.queue.backend.user.entity.User;
+import com.queue.backend.counter.entity.Counter;
 
 @Entity
 @Table(name = "queue_tokens")
@@ -21,6 +22,10 @@ public class QueueToken {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "counter_id", nullable = true)
+    private Counter counter;
 
     public QueueToken() {
     }
@@ -57,5 +62,13 @@ public class QueueToken {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Counter getCounter() {
+        return counter;
+    }
+
+    public void setCounter(Counter counter) {
+        this.counter = counter;
     }
 }

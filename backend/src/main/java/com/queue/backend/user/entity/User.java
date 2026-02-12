@@ -25,6 +25,9 @@ public class User {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(nullable = false)
+    private String password;
+
     // 🔹 Constructors
     public User() {}
 
@@ -82,5 +85,13 @@ public class User {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
