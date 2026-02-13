@@ -14,13 +14,13 @@ public class QueueService {
     private final UserRepository userRepository;
 
     public QueueService(QueueRepository queueRepository,
-                        UserRepository userRepository) {
+            UserRepository userRepository) {
         this.queueRepository = queueRepository;
         this.userRepository = userRepository;
     }
 
     // ✅ Generate Token (AUTO INCREMENT SAFE)
-    public QueueToken generateToken(Long userId) {
+    public QueueToken generateToken(Long userId, String serviceType) {
 
         if (userId == null) {
             throw new RuntimeException("User ID cannot be null");
@@ -32,16 +32,28 @@ public class QueueService {
 
         // Get last token
         Optional<QueueToken> lastTokenOpt = queueRepository.findFirstByOrderByTokenNumberDesc();
-        
+
         int nextToken = lastTokenOpt.isPresent() ? lastTokenOpt.get().getTokenNumber() + 1 : 1;
 
         QueueToken token = new QueueToken(
                 nextToken,
                 QueueStatus.WAITING,
-                user
-        );
+                user,
+                serviceType);
+        // Note: For now, we'll store serviceType in logs or metadata if needed,
+        // but the token is simply queued for the next available counter.
+        // We could also filter waiting queue by serviceType if we add that field to
+        // QueueToken.
 
         return queueRepository.save(token);
+    }
+
+    // ✅ Get active token for user
+    public Optional<QueueToken> getActiveTokenForUser(Long userId) {
+        return queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING)
+                .stream()
+                .filter(t -> t.getUser().getId().equals(userId))
+                .findFirst();
     }
 
     // ✅ Get waiting queue
@@ -53,8 +65,7 @@ public class QueueService {
     // ✅ Serve next token
     public QueueToken serveNext() {
 
-        List<QueueToken> waitingList =
-                queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
+        List<QueueToken> waitingList = queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
 
         if (waitingList.isEmpty()) {
             return null;
@@ -82,7 +93,7 @@ public class QueueService {
         }
         QueueToken token = queueRepository.findById(tokenId)
                 .orElseThrow(() -> new RuntimeException("Token not found with ID: " + tokenId));
-        
+
         token.setStatus(newStatus);
         return queueRepository.save(token);
     }

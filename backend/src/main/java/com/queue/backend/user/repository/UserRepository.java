@@ -7,7 +7,10 @@ import com.queue.backend.user.entity.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
+
     Optional<User> findByEmail(String email);
+
     boolean existsByEmail(String email);
+
+    java.util.List<User> findByRole(String role);
 }

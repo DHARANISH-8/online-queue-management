@@ -4,7 +4,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/queue")
+@RequestMapping("/api/queue")
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:5176" })
 public class QueueController {
 
     private final QueueService queueService;
@@ -15,8 +16,8 @@ public class QueueController {
 
     // Generate token
     @PostMapping("/generate/{userId}")
-    public QueueToken generate(@PathVariable Long userId) {
-        return queueService.generateToken(userId);
+    public QueueToken generate(@PathVariable Long userId, @RequestParam String serviceType) {
+        return queueService.generateToken(userId, serviceType);
     }
 
     // View waiting queue
@@ -47,5 +48,11 @@ public class QueueController {
     @GetMapping("/stats/count")
     public long getQueueCount(@RequestParam QueueStatus status) {
         return queueService.getQueueCountByStatus(status);
+    }
+
+    // Get active token for user
+    @GetMapping("/user/{userId}")
+    public QueueToken getActiveToken(@PathVariable Long userId) {
+        return queueService.getActiveTokenForUser(userId).orElse(null);
     }
 }

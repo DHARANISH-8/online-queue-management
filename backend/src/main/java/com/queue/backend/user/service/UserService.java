@@ -1,6 +1,5 @@
 package com.queue.backend.user.service;
 
-
 import com.queue.backend.user.entity.User;
 import com.queue.backend.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,5 +34,9 @@ public class UserService {
             }
         }
         throw new RuntimeException("Invalid credentials");
+    }
+
+    public java.util.List<User> getUsersByRole(String role) {
+        return userRepository.findByRole(role);
     }
 }

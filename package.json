@@ -1,0 +1,11 @@
+{
+    "name": "online-queue-management-root",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "cd frontend/frontend && npm run dev",
+        "build": "cd frontend/frontend && npm run build",
+        "lint": "cd frontend/frontend && npm run lint",
+        "start": "cd frontend/frontend && npm run dev"
+    }
+}

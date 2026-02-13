@@ -20,15 +20,15 @@ public class CounterService {
     private final QueueRepository queueRepository;
 
     public CounterService(CounterRepository counterRepository,
-                          UserRepository userRepository,
-                          QueueRepository queueRepository) {
+            UserRepository userRepository,
+            QueueRepository queueRepository) {
         this.counterRepository = counterRepository;
         this.userRepository = userRepository;
         this.queueRepository = queueRepository;
     }
 
     // Create new counter
-    public Counter createCounter(String counterName, Long staffId) {
+    public Counter createCounter(String counterName, String serviceType, Long staffId) {
         if (staffId == null) {
             throw new RuntimeException("Staff ID cannot be null");
         }
@@ -38,9 +38,9 @@ public class CounterService {
 
         Counter counter = new Counter(
                 counterName,
+                serviceType,
                 CounterStatus.CLOSED,
-                staff
-        );
+                staff);
 
         return counterRepository.save(counter);
     }
@@ -95,8 +95,7 @@ public class CounterService {
             throw new RuntimeException("Counter is not open");
         }
 
-        List<QueueToken> waitingTokens =
-                queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
+        List<QueueToken> waitingTokens = queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
 
         if (waitingTokens.isEmpty()) {
             throw new RuntimeException("No waiting tokens");
@@ -109,6 +108,24 @@ public class CounterService {
 
         return queueRepository.save(token);
     }
+
+    // Get unique service types
+    public List<String> getUniqueServiceTypes() {
+        return counterRepository.findAll()
+                .stream()
+                .map(Counter::getServiceType)
+                .distinct()
+                .toList();
+    }
+
+    // Delete counter
+    public void deleteCounter(Long id) {
+        if (id == null) {
+            throw new RuntimeException("Counter ID cannot be null");
+        }
+        if (!counterRepository.existsById(id)) {
+            throw new RuntimeException("Counter not found with ID: " + id);
+        }
+        counterRepository.deleteById(id);
+    }
 }
-
-

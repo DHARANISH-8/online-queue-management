@@ -18,14 +18,19 @@ public class Counter {
     @Column(nullable = false)
     private CounterStatus status;
 
+    @Column(nullable = true)
+    private String serviceType;
+
     @ManyToOne
     @JoinColumn(name = "staff_id", nullable = false)
-    private User staff;  // staff user assigned to counter
+    private User staff; // staff user assigned to counter
 
-    public Counter() {}
+    public Counter() {
+    }
 
-    public Counter(String counterName, CounterStatus status, User staff) {
+    public Counter(String counterName, String serviceType, CounterStatus status, User staff) {
         this.counterName = counterName;
+        this.serviceType = serviceType;
         this.status = status;
         this.staff = staff;
     }
@@ -48,6 +53,14 @@ public class Counter {
 
     public void setStatus(CounterStatus status) {
         this.status = status;
+    }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
     }
 
     public User getStaff() {

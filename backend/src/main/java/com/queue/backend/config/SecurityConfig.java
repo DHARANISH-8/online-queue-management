@@ -17,11 +17,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
-            );
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/**").permitAll() // TEMPORARY: Allow all API for testing
+                        .anyRequest().authenticated());
         return http.build();
     }
 
@@ -36,7 +36,8 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173") // Adjust port if needed
+                        .allowedOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:5176") // Added
+                                                                                                                   // 5176
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
             }
         };

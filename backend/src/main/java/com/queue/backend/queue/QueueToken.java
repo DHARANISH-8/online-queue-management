@@ -27,13 +27,17 @@ public class QueueToken {
     @JoinColumn(name = "counter_id", nullable = true)
     private Counter counter;
 
+    @Column(nullable = true)
+    private String serviceType;
+
     public QueueToken() {
     }
 
-    public QueueToken(int tokenNumber, QueueStatus status, User user) {
+    public QueueToken(int tokenNumber, QueueStatus status, User user, String serviceType) {
         this.tokenNumber = tokenNumber;
         this.status = status;
         this.user = user;
+        this.serviceType = serviceType;
     }
 
     public Long getId() {
@@ -70,5 +74,13 @@ public class QueueToken {
 
     public void setCounter(Counter counter) {
         this.counter = counter;
+    }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
     }
 }

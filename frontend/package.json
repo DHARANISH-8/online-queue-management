@@ -1,0 +1,11 @@
+{
+  "name": "frontend-root",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "install:inner": "cd frontend && npm install",
+    "start": "npm run dev",
+    "build": "cd frontend && npm run build"
+  }
+}
