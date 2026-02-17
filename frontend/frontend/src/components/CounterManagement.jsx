@@ -3,21 +3,22 @@ import './CounterManagement.css';
 
 const CounterManagement = () => {
     const [counters, setCounters] = useState([]);
-    const [staffList, setStaffList] = useState([]);
+    const [doctors, setDoctors] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
 
     const [newCounter, setNewCounter] = useState({
         name: '',
         serviceType: 'General Inquiry',
-        staffId: ''
+        doctorId: ''
     });
 
     const services = ['General Inquiry', 'Loans & Mortgages', 'Cash Deposits', 'VIP Services', 'Account Opening'];
 
     useEffect(() => {
         fetchCounters();
-        fetchStaff();
+        fetchDoctors();
     }, []);
 
     const fetchCounters = async () => {
@@ -32,36 +33,36 @@ const CounterManagement = () => {
         }
     };
 
-    const fetchStaff = async () => {
+    const fetchDoctors = async () => {
         try {
-            console.log('Fetching staff list for role STAFF...');
-            const response = await fetch('/api/users/role/STAFF');
-            if (!response.ok) {
-                console.error('Fetch staff failed with status:', response.status);
-                return;
-            }
-            const data = await response.json();
-            console.log('Staff list response data:', data);
-            console.log('Is array?', Array.isArray(data));
-            if (Array.isArray(data)) {
-                setStaffList(data);
-                console.log('Staff list set successfully. Count:', data.length);
-            } else {
-                console.warn('Received non-array data for staff list:', data);
-                setStaffList([]);
-            }
+            const [doctorRes, staffRes] = await Promise.all([
+                fetch('/api/users/role/DOCTOR'),
+                fetch('/api/users/role/STAFF')
+            ]);
+
+            const doctorData = doctorRes.ok ? await doctorRes.json() : [];
+            const staffData = staffRes.ok ? await staffRes.json() : [];
+            const merged = [...doctorData, ...staffData];
+            const uniqueDoctors = merged.filter((item, index, self) => (
+                self.findIndex((u) => u.id === item.id) === index
+            ));
+            setDoctors(uniqueDoctors);
         } catch (err) {
-            console.error('Error fetching staff:', err);
+            console.error('Error fetching doctors:', err);
+            setDoctors([]);
         }
     };
 
+
+
     const handleAddCounter = async (e) => {
         e.preventDefault();
+        setError('');
         try {
             const params = new URLSearchParams();
             params.append('name', newCounter.name);
             params.append('serviceType', newCounter.serviceType);
-            params.append('staffId', newCounter.staffId);
+            params.append('doctorId', newCounter.doctorId);
 
             const response = await fetch(`/api/counters?${params.toString()}`, {
                 method: 'POST'
@@ -69,11 +70,15 @@ const CounterManagement = () => {
 
             if (response.ok) {
                 setShowAddModal(false);
-                setNewCounter({ name: '', serviceType: 'General Inquiry', staffId: '' });
+                setNewCounter({ name: '', serviceType: 'General Inquiry', doctorId: '' });
                 fetchCounters();
+            } else {
+                const data = await response.json().catch(() => ({}));
+                setError(data.message || 'Failed to create counter');
             }
         } catch (err) {
             console.error('Error adding counter:', err);
+            setError('Error adding counter');
         }
     };
 
@@ -89,6 +94,62 @@ const CounterManagement = () => {
             }
         } catch (err) {
             console.error('Error deleting counter:', err);
+        }
+    };
+
+    const handleOpenCounter = async (id) => {
+        try {
+            const response = await fetch(`/api/counters/${id}/open`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                fetchCounters();
+            } else {
+                const error = await response.text();
+                alert('Error opening counter: ' + error);
+            }
+        } catch (err) {
+            console.error('Error opening counter:', err);
+            alert('Error opening counter');
+        }
+    };
+
+    const handleCloseCounter = async (id) => {
+        try {
+            const response = await fetch(`/api/counters/${id}/close`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                fetchCounters();
+            } else {
+                const error = await response.text();
+                alert('Error closing counter: ' + error);
+            }
+        } catch (err) {
+            console.error('Error closing counter:', err);
+            alert('Error closing counter');
+        }
+    };
+
+    const handleServeNextToken = async (id) => {
+        try {
+            const response = await fetch(`/api/counters/${id}/serve`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const token = await response.json();
+                alert(`Serving token: ${token.tokenNumber}`);
+                fetchCounters();
+            } else {
+                const error = await response.text();
+                alert('Error serving token: ' + error);
+            }
+        } catch (err) {
+            console.error('Error serving token:', err);
+            alert('Error serving token');
         }
     };
 
@@ -108,7 +169,7 @@ const CounterManagement = () => {
         <div className="counter-management">
             <div className="counter-management-header">
                 <h2>Counters</h2>
-                <p>Manage service counters, assign staff, and monitor live status.</p>
+                <p>Manage service counters, assign doctors, and monitor live status.</p>
             </div>
 
             <div className="toolbar">
@@ -142,7 +203,6 @@ const CounterManagement = () => {
                             <tr>
                                 <th>ID</th>
                                 <th>Counter Name</th>
-                                <th>Assigned Staff</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -155,35 +215,34 @@ const CounterManagement = () => {
                                         <span className="name">{counter.counterName}</span>
                                         <span className="dept">{counter.serviceType}</span>
                                     </td>
-                                    <td>
-                                        <div className="staff-cell">
-                                            <img
-                                                src={`https://ui-avatars.com/api/?name=${counter.staff?.name || 'User'}&background=random`}
-                                                alt={counter.staff?.name}
-                                                className="staff-avatar"
-                                            />
-                                            <span className="staff-name">
-                                                {counter.staff?.name || 'Unknown'}
-                                            </span>
-                                        </div>
-                                    </td>
                                     <td className="status-cell">
                                         <span className={`status-badge ${getStatusClass(counter.status)}`}>
                                             {counter.status}
                                         </span>
                                     </td>
                                     <td className="actions-cell">
-                                        <button className="action-btn">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                        </button>
-                                        <button className="action-btn delete" onClick={() => handleDeleteCounter(counter.id)}>
+                                        {counter.status === 'CLOSED' ? (
+                                            <button className="action-btn open" onClick={() => handleOpenCounter(counter.id)} title="Open Counter">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button className="action-btn serve" onClick={() => handleServeNextToken(counter.id)} title="Serve Next Token">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                                </button>
+                                                <button className="action-btn close" onClick={() => handleCloseCounter(counter.id)} title="Close Counter">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                                </button>
+                                            </>
+                                        )}
+                                        <button className="action-btn delete" onClick={() => handleDeleteCounter(counter.id)} title="Delete Counter">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                         </button>
                                     </td>
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                                         No counters found. Create one to get started.
                                     </td>
                                 </tr>
@@ -200,6 +259,7 @@ const CounterManagement = () => {
                             <h3>Add New Counter</h3>
                             <button className="close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
                         </div>
+                        {error && <div style={{ color: '#dc2626', marginBottom: '0.75rem' }}>{error}</div>}
                         <form onSubmit={handleAddCounter}>
                             <div className="form-group">
                                 <label>Counter Name</label>
@@ -221,21 +281,24 @@ const CounterManagement = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Assign Staff</label>
+                                <label>Select Doctor</label>
                                 <select
                                     required
-                                    value={newCounter.staffId}
-                                    onChange={(e) => setNewCounter({ ...newCounter, staffId: e.target.value })}
+                                    value={newCounter.doctorId}
+                                    onChange={(e) => setNewCounter({ ...newCounter, doctorId: e.target.value })}
                                 >
-                                    <option value="">Select Staff</option>
-                                    {staffList.map(staff => (
-                                        <option key={staff.id} value={staff.id}>{staff.name}</option>
+                                    <option value="">Choose doctor</option>
+                                    {doctors.map((doctor) => (
+                                        <option key={doctor.id} value={doctor.id}>
+                                            {doctor.name} ({doctor.email})
+                                        </option>
                                     ))}
                                 </select>
                             </div>
+
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Create Counter</button>
+                                <button type="submit" className="btn-primary" disabled={!newCounter.doctorId}>Create Counter</button>
                             </div>
                         </form>
                     </div>

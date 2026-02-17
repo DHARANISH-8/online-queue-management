@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import './Auth.css';
+import luxuryBg from '../assets/luxury-minimalist.avif';
+import logo from "../assets/apollo_logo-removebg-preview.png";
+
 
 const Auth = ({ onLogin }) => {
-    const [isLogin, setIsLogin] = useState(false);
+    const [isLogin, setIsLogin] = useState(true);
     const [role, setRole] = useState('CUSTOMER');
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -109,169 +112,178 @@ const Auth = ({ onLogin }) => {
 
     return (
         <div className="auth-container">
-            {/* Left Side - Branding */}
-            <div className="auth-left">
-                <div className="auth-branding">
-                    <h1>Streamline Your Service Flow</h1>
-                    <p>
-                        Manage queues, counters, and customer experiences efficiently with Q-Flow's intelligent dashboard.
-                    </p>
-                </div>
-            </div>
-
-            {/* Right Side - Auth Form */}
-            <div className="auth-right">
-                <div className="auth-right-content">
-                    <div className="auth-header">
-                        <div className="logo">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
-                            Q-Flow
-                        </div>
-                        <div className="auth-tabs">
-                            <button
-                                className={`auth-tab ${isLogin ? 'active' : ''}`}
-                                onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
-                            >
-                                Login
-                            </button>
-                            <button
-                                className={`auth-tab ${!isLogin ? 'active' : ''}`}
-                                onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
-                            >
-                                Sign Up
-                            </button>
-                        </div>
+            <div className="auth-card">
+                {/* Left Side - Branding */}
+                <div className="auth-left" style={{ backgroundImage: `url(${luxuryBg})` }}>
+                    <div className="auth-branding">
+                        <h1>Apollo Hospitals Smart Queue</h1>
+                        <p>
+                            apolloQ helps Apollo Hospitals manage patient queues, counters, and waiting times seamlessly for a smoother care experience.
+                        </p>
                     </div>
+                </div>
 
-                    <div className="auth-form-container">
-                        <h2>{isLogin ? 'Welcome back' : 'Create an account'}</h2>
-                        <p>{isLogin ? 'Enter your details to access your account.' : 'Get started with Q-Flow today.'}</p>
+                {/* Right Side - Auth Form */}
+                <div className="auth-right">
+                    <div className="auth-right-content">
+                        <div className="auth-header">
+                            <div className="logo">
 
-                        {error && <div className="auth-message error">{error}</div>}
-                        {success && <div className="auth-message success">{success}</div>}
-
-                        <form onSubmit={handleSubmit}>
-                            {!isLogin && (
-                                <div className="form-group">
-                                    <label>Full Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="John Doe"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        required
-                                    />
+                                <img src={logo} alt="logo" className="apollo-logo" />
+                                <div className="logo-text">
+                                    <span className="logo-title">apolloQ</span>
+                                    <span className="logo-subtitle">Apollo Hospitals Queue Management</span>
                                 </div>
-                            )}
-
-                            <div className="form-group">
-                                <label>Email</label>
-                                <input
-                                    type="email"
-                                    placeholder="name@company.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
                             </div>
+                            <div className="auth-tabs">
+                                <button
+                                    className={`auth-tab ${isLogin ? 'active' : ''}`}
+                                    onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    className={`auth-tab ${!isLogin ? 'active' : ''}`}
+                                    onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
+                                >
+                                    Sign Up
+                                </button>
+                            </div>
+                        </div>
 
-                            {!isLogin && (
-                                <div className="form-group">
-                                    <label>Phone Number</label>
-                                    <input
-                                        type="tel"
-                                        placeholder="+1 234 567 8900"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                            )}
+                        <div className="auth-form-container">
+                            <h2>{isLogin ? 'Welcome back' : 'Create an account'}</h2>
+                            <p>{isLogin ? 'Sign in to manage Apollo Hospitals queues with apolloQ.' : 'Get started with ApolloQ today.'}</p>
 
+                            {error && <div className="auth-message error">{error}</div>}
+                            {success && <div className="auth-message success">{success}</div>}
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Password</label>
-                                    <input
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        onFocus={() => setIsPasswordFocused(true)}
-                                        onBlur={() => setIsPasswordFocused(false)}
-                                        required
-                                    />
-                                    {!isLogin && isPasswordFocused && (
-                                        <div className="password-feedback">
-                                            <div className={`feedback-item ${passwordStrength.length ? 'valid' : 'invalid'}`}>Currently {password.length} chars (Min 8)</div>
-                                            <div className={`feedback-item ${passwordStrength.uppercase ? 'valid' : 'invalid'}`}>1 Uppercase</div>
-                                            <div className={`feedback-item ${passwordStrength.lowercase ? 'valid' : 'invalid'}`}>1 Lowercase</div>
-                                            <div className={`feedback-item ${passwordStrength.number ? 'valid' : 'invalid'}`}>1 Number</div>
-                                            <div className={`feedback-item ${passwordStrength.special ? 'valid' : 'invalid'}`}>1 Special Char (!@#$%^&*)</div>
-                                        </div>
-                                    )}
-                                </div>
+                            <form onSubmit={handleSubmit}>
                                 {!isLogin && (
                                     <div className="form-group">
-                                        <label>Confirm Password</label>
+                                        <label>Full Name</label>
                                         <input
-                                            type="password"
-                                            placeholder="••••••••"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            type="text"
+                                            placeholder="John Doe"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
                                             required
                                         />
                                     </div>
                                 )}
-                            </div>
 
-                            <div className="form-group">
-                                <label>Role</label>
-                                <div className="role-selection">
-                                    <div
-                                        className={`role-card ${role === 'CUSTOMER' ? 'active' : ''}`}
-                                        onClick={() => setRole('CUSTOMER')}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="12" cy="7" r="4"></circle>
-                                        </svg>
-                                        <span>User</span>
+                                <div className="form-group">
+                                    <label>Email address</label>
+                                    <input
+                                        type="email"
+                                        placeholder="name@gmail.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                {!isLogin && (
+                                    <div className="form-group">
+                                        <label>Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            placeholder="+1 234 567 8900"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                    <div
-                                        className={`role-card ${role === 'STAFF' ? 'active' : ''}`}
-                                        onClick={() => setRole('STAFF')}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="9" cy="7" r="4"></circle>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                        </svg>
-                                        <span>Staff</span>
+                                )}
+
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Password</label>
+                                        <input
+                                            type="password"
+                                            placeholder="••••••••"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            onFocus={() => setIsPasswordFocused(true)}
+                                            onBlur={() => setIsPasswordFocused(false)}
+                                            required
+                                        />
+                                        {!isLogin && isPasswordFocused && (
+                                            <div className="password-feedback">
+                                                <div className={`feedback-item ${passwordStrength.length ? 'valid' : 'invalid'}`}>Currently {password.length} chars (Min 8)</div>
+                                                <div className={`feedback-item ${passwordStrength.uppercase ? 'valid' : 'invalid'}`}>1 Uppercase</div>
+                                                <div className={`feedback-item ${passwordStrength.lowercase ? 'valid' : 'invalid'}`}>1 Lowercase</div>
+                                                <div className={`feedback-item ${passwordStrength.number ? 'valid' : 'invalid'}`}>1 Number</div>
+                                                <div className={`feedback-item ${passwordStrength.special ? 'valid' : 'invalid'}`}>1 Special Char (!@#$%^&*)</div>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div
-                                        className={`role-card ${role === 'ADMIN' ? 'active' : ''}`}
-                                        onClick={() => setRole('ADMIN')}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                        </svg>
-                                        <span>Admin</span>
+                                    {!isLogin && (
+                                        <div className="form-group">
+                                            <label>Confirm Password</label>
+                                            <input
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {isLogin && (
+                                    <div className="forgot-password">
+                                        <a href="#">Forgot password?</a>
+                                    </div>
+                                )}
+
+                                <div className="form-group">
+                                    <label>Role</label>
+                                    <div className="role-selection">
+                                        <div
+                                            className={`role-card ${role === 'CUSTOMER' ? 'active' : ''}`}
+                                            onClick={() => setRole('CUSTOMER')}
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                            <span>User</span>
+                                        </div>
+                                        <div
+                                            className={`role-card ${role === 'DOCTOR' ? 'active' : ''}`}
+                                            onClick={() => setRole('DOCTOR')}
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M12 2v20"></path>
+                                                <path d="M17 7H7"></path>
+                                                <path d="M17 17H7"></path>
+                                            </svg>
+                                            <span>Doctor</span>
+                                        </div>
+                                        <div
+                                            className={`role-card ${role === 'ADMIN' ? 'active' : ''}`}
+                                            onClick={() => setRole('ADMIN')}
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                            </svg>
+                                            <span>Admin</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <button
-                                type="submit"
-                                className="btn-primary"
-                                disabled={!isLogin && !isPasswordValid}
-                            >
-                                {isLogin ? 'Login' : 'Sign Up'}
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    disabled={!isLogin && !isPasswordValid}
+                                >
+                                    {isLogin ? 'Login' : 'Sign Up'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

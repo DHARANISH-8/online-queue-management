@@ -1,7 +1,9 @@
 package com.queue.backend.queue;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/queue")
@@ -16,8 +18,14 @@ public class QueueController {
 
     // Generate token
     @PostMapping("/generate/{userId}")
-    public QueueToken generate(@PathVariable Long userId, @RequestParam String serviceType) {
-        return queueService.generateToken(userId, serviceType);
+    public ResponseEntity<?> generate(@PathVariable Long userId, @RequestParam String serviceType,
+            @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) Long counterId) {
+        try {
+            return ResponseEntity.ok(queueService.generateToken(userId, serviceType, doctorId, counterId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // View waiting queue

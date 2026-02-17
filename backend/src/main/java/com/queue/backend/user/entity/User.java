@@ -20,7 +20,7 @@ public class User {
     private String phone;
 
     @Column(nullable = false)
-    private String role; // ADMIN, STAFF, CUSTOMER
+    private String role; // ADMIN, DOCTOR, CUSTOMER
 
     @Column(nullable = false)
     private Boolean active = true;

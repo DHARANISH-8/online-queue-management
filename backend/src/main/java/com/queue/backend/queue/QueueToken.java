@@ -12,7 +12,7 @@ public class QueueToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private int tokenNumber;
 
     @Enumerated(EnumType.STRING)

@@ -22,7 +22,7 @@ public class Counter {
     private String serviceType;
 
     @ManyToOne
-    @JoinColumn(name = "staff_id", nullable = false)
+    @JoinColumn(name = "staff_id", nullable = true)
     private User staff; // staff user assigned to counter
 
     public Counter() {

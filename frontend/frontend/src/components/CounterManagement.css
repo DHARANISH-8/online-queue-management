@@ -193,6 +193,24 @@
     border-color: #fecaca;
 }
 
+.action-btn.open:hover {
+    background-color: #dcfce7;
+    color: #22c55e;
+    border-color: #bbf7d0;
+}
+
+.action-btn.serve:hover {
+    background-color: #dbeafe;
+    color: #3b82f6;
+    border-color: #bfdbfe;
+}
+
+.action-btn.close:hover {
+    background-color: #fef3c7;
+    color: #f59e0b;
+    border-color: #fde68a;
+}
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;

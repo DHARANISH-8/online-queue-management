@@ -2,9 +2,11 @@ package com.queue.backend.counter.controller;
 
 import com.queue.backend.counter.entity.Counter;
 import com.queue.backend.counter.service.CounterService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/counters")
@@ -28,9 +30,13 @@ public class CounterController {
     }
 
     @PostMapping
-    public Counter createCounter(@RequestParam String name, @RequestParam String serviceType,
-            @RequestParam Long staffId) {
-        return counterService.createCounter(name, serviceType, staffId);
+    public ResponseEntity<?> createCounter(@RequestParam String name, @RequestParam String serviceType,
+            @RequestParam Long doctorId) {
+        try {
+            return ResponseEntity.ok(counterService.createCounter(name, serviceType, doctorId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}/open")

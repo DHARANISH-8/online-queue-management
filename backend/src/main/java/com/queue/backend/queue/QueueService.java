@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import com.queue.backend.counter.entity.Counter;
+import com.queue.backend.counter.entity.CounterStatus;
+import com.queue.backend.counter.repository.CounterRepository;
 import com.queue.backend.user.entity.User;
 import com.queue.backend.user.repository.UserRepository;
 
@@ -12,15 +15,18 @@ public class QueueService {
 
     private final QueueRepository queueRepository;
     private final UserRepository userRepository;
+    private final CounterRepository counterRepository;
 
     public QueueService(QueueRepository queueRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            CounterRepository counterRepository) {
         this.queueRepository = queueRepository;
         this.userRepository = userRepository;
+        this.counterRepository = counterRepository;
     }
 
     // ✅ Generate Token (AUTO INCREMENT SAFE)
-    public QueueToken generateToken(Long userId, String serviceType) {
+    public QueueToken generateToken(Long userId, String serviceType, Long doctorId, Long counterId) {
 
         if (userId == null) {
             throw new RuntimeException("User ID cannot be null");
@@ -30,8 +36,36 @@ public class QueueService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Get last token
-        Optional<QueueToken> lastTokenOpt = queueRepository.findFirstByOrderByTokenNumberDesc();
+        List<Counter> openCounters = counterRepository.findByStatus(CounterStatus.OPEN);
+        if (openCounters.isEmpty()) {
+            throw new RuntimeException("No open counters available. Please wait for admin to open a counter.");
+        }
+
+        Counter selectedCounter;
+        if (counterId != null) {
+            selectedCounter = openCounters.stream()
+                    .filter(counter -> counter.getId().equals(counterId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Selected counter is not open."));
+        } else {
+            selectedCounter = openCounters.stream()
+                    .filter(counter -> counter.getServiceType() != null
+                            && counter.getServiceType().equalsIgnoreCase(serviceType))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Selected service is not available right now. Please choose an open service."));
+        }
+
+        if (doctorId != null) {
+            User doctor = userRepository.findById(doctorId)
+                    .orElseThrow(() -> new RuntimeException("Doctor not found"));
+            String role = doctor.getRole() == null ? "" : doctor.getRole().toUpperCase();
+            if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
+                throw new RuntimeException("Selected user is not a doctor");
+            }
+        }
+
+        // Token sequence is per counter, so it resets for each counter.
+        Optional<QueueToken> lastTokenOpt = queueRepository.findFirstByCounterIdOrderByTokenNumberDesc(selectedCounter.getId());
 
         int nextToken = lastTokenOpt.isPresent() ? lastTokenOpt.get().getTokenNumber() + 1 : 1;
 
@@ -40,10 +74,7 @@ public class QueueService {
                 QueueStatus.WAITING,
                 user,
                 serviceType);
-        // Note: For now, we'll store serviceType in logs or metadata if needed,
-        // but the token is simply queued for the next available counter.
-        // We could also filter waiting queue by serviceType if we add that field to
-        // QueueToken.
+        token.setCounter(selectedCounter);
 
         return queueRepository.save(token);
     }

@@ -22,7 +22,10 @@ function App() {
     if (role === 'ADMIN') {
       return <AdminDashboard user={user} onLogout={handleLogout} />;
     }
-    // Fallback for other roles (we can add StaffDashboard later)
+    if (role === 'DOCTOR' || role === 'STAFF') {
+      return <AdminDashboard user={user} onLogout={handleLogout} />;
+    }
+    // Fallback for other roles
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <h1>Welcome, {user.name}</h1>

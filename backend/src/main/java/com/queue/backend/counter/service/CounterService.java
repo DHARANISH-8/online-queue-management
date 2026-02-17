@@ -28,19 +28,23 @@ public class CounterService {
     }
 
     // Create new counter
-    public Counter createCounter(String counterName, String serviceType, Long staffId) {
-        if (staffId == null) {
-            throw new RuntimeException("Staff ID cannot be null");
+    public Counter createCounter(String counterName, String serviceType, Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor selection is required");
         }
 
-        User staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+        User doctor = userRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        String role = doctor.getRole() == null ? "" : doctor.getRole().toUpperCase();
+        if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
+            throw new RuntimeException("Selected user is not a doctor");
+        }
 
         Counter counter = new Counter(
                 counterName,
                 serviceType,
                 CounterStatus.CLOSED,
-                staff);
+                doctor);
 
         return counterRepository.save(counter);
     }
@@ -66,6 +70,15 @@ public class CounterService {
 
         Counter counter = counterRepository.findById(counterId)
                 .orElseThrow(() -> new RuntimeException("Counter not found"));
+
+        // Auto-cancel active tokens mapped to this counter when it is closed.
+        List<QueueToken> tokens = queueRepository.findByCounterId(counterId);
+        for (QueueToken token : tokens) {
+            if (token.getStatus() == QueueStatus.WAITING || token.getStatus() == QueueStatus.SERVED) {
+                token.setStatus(QueueStatus.CANCELLED);
+                queueRepository.save(token);
+            }
+        }
 
         counter.setStatus(CounterStatus.CLOSED);
         return counterRepository.save(counter);
@@ -109,13 +122,17 @@ public class CounterService {
         return queueRepository.save(token);
     }
 
-    // Get unique service types
+    // Get unique service types - returns default services if no counters exist
     public List<String> getUniqueServiceTypes() {
-        return counterRepository.findAll()
+        List<String> serviceTypes = counterRepository.findByStatus(CounterStatus.OPEN)
                 .stream()
                 .map(Counter::getServiceType)
+                .filter(type -> type != null && !type.isBlank())
                 .distinct()
                 .toList();
+
+        // Only expose services that currently have open counters.
+        return serviceTypes;
     }
 
     // Delete counter
@@ -126,6 +143,17 @@ public class CounterService {
         if (!counterRepository.existsById(id)) {
             throw new RuntimeException("Counter not found with ID: " + id);
         }
+
+        // Cancel any active tokens from this counter so they disappear for users.
+        List<QueueToken> tokens = queueRepository.findByCounterId(id);
+        for (QueueToken token : tokens) {
+            if (token.getStatus() == QueueStatus.WAITING || token.getStatus() == QueueStatus.SERVED) {
+                token.setStatus(QueueStatus.CANCELLED);
+            }
+            token.setCounter(null);
+            queueRepository.save(token);
+        }
+
         counterRepository.deleteById(id);
     }
 }

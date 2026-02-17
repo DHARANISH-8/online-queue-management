@@ -21,22 +21,22 @@ public class DataInitializer {
                 System.out.println("Admin user seeded.");
             }
 
-            // Seed Staff Members if not exist
-            System.out.println("Checking for staff members to seed...");
-            seedStaff(userRepository, passwordEncoder, "John Staff", "staff1@qflow.com", "9876543210");
-            seedStaff(userRepository, passwordEncoder, "Sarah Staff", "staff2@qflow.com", "9876543211");
-            seedStaff(userRepository, passwordEncoder, "Robert Staff", "staff3@qflow.com", "9876543212");
+            // Seed Doctor Members if not exist
+            System.out.println("Checking for doctor members to seed...");
+            seedDoctor(userRepository, passwordEncoder, "Dr John", "doctor1@qflow.com", "9876543210");
+            seedDoctor(userRepository, passwordEncoder, "Dr Sarah", "doctor2@qflow.com", "9876543211");
+            seedDoctor(userRepository, passwordEncoder, "Dr Robert", "doctor3@qflow.com", "9876543212");
             System.out.println("Seeding process completed.");
         };
     }
 
-    private void seedStaff(UserRepository userRepository, PasswordEncoder passwordEncoder, String name, String email,
+    private void seedDoctor(UserRepository userRepository, PasswordEncoder passwordEncoder, String name, String email,
             String phone) {
         if (!userRepository.existsByEmail(email)) {
-            User staff = new User(name, email, phone, "STAFF");
-            staff.setPassword(passwordEncoder.encode("staff123"));
-            userRepository.save(staff);
-            System.out.println("Staff member seeded: " + name);
+            User doctor = new User(name, email, phone, "DOCTOR");
+            doctor.setPassword(passwordEncoder.encode("doctor123"));
+            userRepository.save(doctor);
+            System.out.println("Doctor member seeded: " + name);
         }
     }
 }
