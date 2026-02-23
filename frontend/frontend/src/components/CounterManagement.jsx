@@ -8,13 +8,24 @@ const CounterManagement = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const medicalSpecialties = [
+        'General Medicine',
+        'Cardiology',
+        'Neurology',
+        'Orthopedics',
+        'Pediatrics',
+        'Dermatology',
+        'ENT',
+        'Ophthalmology',
+        'Gynecology',
+        'Dentistry'
+    ];
+
     const [newCounter, setNewCounter] = useState({
         name: '',
-        serviceType: 'General Inquiry',
+        serviceType: medicalSpecialties[0],
         doctorId: ''
     });
-
-    const services = ['General Inquiry', 'Loans & Mortgages', 'Cash Deposits', 'VIP Services', 'Account Opening'];
 
     useEffect(() => {
         fetchCounters();
@@ -70,7 +81,7 @@ const CounterManagement = () => {
 
             if (response.ok) {
                 setShowAddModal(false);
-                setNewCounter({ name: '', serviceType: 'General Inquiry', doctorId: '' });
+                setNewCounter({ name: '', serviceType: medicalSpecialties[0], doctorId: '' });
                 fetchCounters();
             } else {
                 const data = await response.json().catch(() => ({}));
@@ -272,12 +283,14 @@ const CounterManagement = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Service Type</label>
+                                <label>Department / Specialty</label>
                                 <select
                                     value={newCounter.serviceType}
                                     onChange={(e) => setNewCounter({ ...newCounter, serviceType: e.target.value })}
                                 >
-                                    {services.map(s => <option key={s} value={s}>{s}</option>)}
+                                    {medicalSpecialties.map((specialty) => (
+                                        <option key={specialty} value={specialty}>{specialty}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">

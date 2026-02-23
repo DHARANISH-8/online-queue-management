@@ -3,13 +3,26 @@ import './AdminDashboard.css';
 import CounterManagement from './CounterManagement';
 
 const AdminDashboard = ({ user, onLogout }) => {
+    const medicalSpecialties = [
+        'General Medicine',
+        'Cardiology',
+        'Neurology',
+        'Orthopedics',
+        'Pediatrics',
+        'Dermatology',
+        'ENT',
+        'Ophthalmology',
+        'Gynecology',
+        'Dentistry'
+    ];
+
     const [view, setView] = useState('overview');
     const [darkMode, setDarkMode] = useState(false);
     const [showTokenModal, setShowTokenModal] = useState(false);
     const [doctors, setDoctors] = useState([]);
     const [tokenForm, setTokenForm] = useState({
         userId: '',
-        serviceType: 'General Inquiry',
+        serviceType: medicalSpecialties[0],
         doctorId: ''
     });
     const [tokenError, setTokenError] = useState('');
@@ -94,7 +107,7 @@ const AdminDashboard = ({ user, onLogout }) => {
 
             const data = await response.json();
             setTokenSuccess(`Token created successfully: #${data.tokenNumber}`);
-            setTokenForm({ userId: '', serviceType: 'General Inquiry', doctorId: '' });
+            setTokenForm({ userId: '', serviceType: medicalSpecialties[0], doctorId: '' });
         } catch (err) {
             setTokenError(err.message || 'Failed to create token');
         } finally {
@@ -327,14 +340,16 @@ const AdminDashboard = ({ user, onLogout }) => {
                             </div>
 
                             <div style={{ marginBottom: '0.85rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.35rem' }}>Service Type</label>
-                                <input
-                                    type="text"
-                                    required
+                                <label style={{ display: 'block', marginBottom: '0.35rem' }}>Department / Specialty</label>
+                                <select
                                     value={tokenForm.serviceType}
                                     onChange={(e) => setTokenForm({ ...tokenForm, serviceType: e.target.value })}
                                     style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                                />
+                                >
+                                    {medicalSpecialties.map((specialty) => (
+                                        <option key={specialty} value={specialty}>{specialty}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div style={{ marginBottom: '1rem' }}>

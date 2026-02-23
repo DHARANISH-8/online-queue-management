@@ -1,0 +1,261 @@
+.doctor-dashboard {
+    min-height: 100vh;
+    padding: 2rem;
+    background: linear-gradient(140deg, #f4f7fb 0%, #e6eef9 100%);
+    color: #102542;
+}
+
+.doctor-dashboard-loading {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f7fb;
+}
+
+.doctor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.doctor-header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.doctor-header p {
+    margin-top: 0.35rem;
+    color: #54718f;
+}
+
+.doctor-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.doctor-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.doctor-profile span {
+    color: #54718f;
+    font-size: 0.85rem;
+}
+
+.doctor-logout {
+    background: #fff;
+    color: #355d84;
+    border: 1px solid #b7cae1;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+}
+
+.doctor-error {
+    margin-bottom: 1rem;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #be123c;
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+}
+
+.doctor-current-card,
+.doctor-queue-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #d8e4f2;
+    padding: 1.15rem;
+    box-shadow: 0 14px 30px rgba(16, 37, 66, 0.06);
+}
+
+.doctor-current-head,
+.doctor-queue-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.doctor-current-head h2,
+.doctor-queue-head h3 {
+    margin: 0;
+}
+
+.doctor-status-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+}
+
+.doctor-status-badge.active {
+    color: #0f3b69;
+    background: #dbeafe;
+}
+
+.doctor-status-badge.idle {
+    color: #475569;
+    background: #e2e8f0;
+}
+
+.doctor-current-body {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.doctor-token-box {
+    min-width: 170px;
+    padding: 1.4rem 1rem;
+    border-radius: 12px;
+    background: #1d5fa8;
+    color: #fff;
+    font-size: 1.9rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.doctor-patient-info p {
+    margin: 0.25rem 0;
+}
+
+.doctor-empty-state {
+    margin-top: 0.75rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: #f8fbff;
+    color: #4b6a87;
+}
+
+.doctor-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-primary,
+.btn-success {
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #1d5fa8;
+    color: #fff;
+}
+
+.btn-success {
+    background: #138a4b;
+    color: #fff;
+}
+
+.btn-primary:disabled,
+.btn-success:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.doctor-queue-card {
+    margin-top: 1rem;
+}
+
+.doctor-metrics {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.doctor-metrics span {
+    font-weight: 700;
+    color: #355d84;
+}
+
+.doctor-metrics small {
+    color: #6687a8;
+}
+
+.doctor-queue-table-wrap {
+    margin-top: 0.8rem;
+    overflow-x: auto;
+}
+
+.doctor-queue-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doctor-queue-table th,
+.doctor-queue-table td {
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    padding: 0.7rem 0.6rem;
+    font-size: 0.95rem;
+}
+
+.doctor-queue-table th {
+    font-size: 0.8rem;
+    color: #6687a8;
+}
+
+.queue-status {
+    display: inline-block;
+    font-size: 0.72rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.queue-status.waiting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.queue-status.in-consultation {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.doctor-empty-row {
+    text-align: center;
+    color: #64809e;
+}
+
+.doctor-updated-at {
+    margin-top: 0.7rem;
+    color: #6687a8;
+    font-size: 0.86rem;
+}
+
+@media (max-width: 900px) {
+    .doctor-dashboard {
+        padding: 1rem;
+    }
+
+    .doctor-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .doctor-header-right {
+        justify-content: space-between;
+    }
+
+    .doctor-profile {
+        align-items: flex-start;
+    }
+
+    .doctor-current-body {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

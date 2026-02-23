@@ -3,6 +3,7 @@ package com.queue.backend.queue;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.queue.backend.counter.entity.Counter;
 import com.queue.backend.counter.entity.CounterStatus;
@@ -42,7 +43,36 @@ public class QueueService {
         }
 
         Counter selectedCounter;
-        if (counterId != null) {
+        if (doctorId != null) {
+            User doctor = userRepository.findById(doctorId)
+                    .orElseThrow(() -> new RuntimeException("Doctor not found"));
+            String role = doctor.getRole() == null ? "" : doctor.getRole().toUpperCase();
+            if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
+                throw new RuntimeException("Selected user is not a doctor");
+            }
+
+            List<Counter> doctorOpenCounters = openCounters.stream()
+                    .filter(counter -> counter.getStaff() != null && doctorId.equals(counter.getStaff().getId()))
+                    .toList();
+            if (doctorOpenCounters.isEmpty()) {
+                throw new RuntimeException("Selected doctor has no open counter.");
+            }
+
+            if (counterId != null) {
+                selectedCounter = doctorOpenCounters.stream()
+                        .filter(counter -> counter.getId().equals(counterId))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Selected counter does not belong to this doctor or is not open."));
+            } else if (serviceType != null && !serviceType.isBlank()) {
+                selectedCounter = doctorOpenCounters.stream()
+                        .filter(counter -> counter.getServiceType() != null
+                                && counter.getServiceType().equalsIgnoreCase(serviceType))
+                        .findFirst()
+                        .orElse(doctorOpenCounters.get(0));
+            } else {
+                selectedCounter = doctorOpenCounters.get(0);
+            }
+        } else if (counterId != null) {
             selectedCounter = openCounters.stream()
                     .filter(counter -> counter.getId().equals(counterId))
                     .findFirst()
@@ -52,16 +82,8 @@ public class QueueService {
                     .filter(counter -> counter.getServiceType() != null
                             && counter.getServiceType().equalsIgnoreCase(serviceType))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Selected service is not available right now. Please choose an open service."));
-        }
-
-        if (doctorId != null) {
-            User doctor = userRepository.findById(doctorId)
-                    .orElseThrow(() -> new RuntimeException("Doctor not found"));
-            String role = doctor.getRole() == null ? "" : doctor.getRole().toUpperCase();
-            if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
-                throw new RuntimeException("Selected user is not a doctor");
-            }
+                    .orElseThrow(() -> new RuntimeException(
+                            "Selected service is not available right now. Please choose an open service."));
         }
 
         // Token sequence is per counter, so it resets for each counter.
@@ -73,7 +95,7 @@ public class QueueService {
                 nextToken,
                 QueueStatus.WAITING,
                 user,
-                serviceType);
+                (serviceType == null || serviceType.isBlank()) ? selectedCounter.getServiceType() : serviceType);
         token.setCounter(selectedCounter);
 
         return queueRepository.save(token);
@@ -81,9 +103,12 @@ public class QueueService {
 
     // ✅ Get active token for user
     public Optional<QueueToken> getActiveTokenForUser(Long userId) {
-        return queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING)
+        Set<QueueStatus> activeStatuses = Set.of(QueueStatus.WAITING, QueueStatus.IN_CONSULTATION, QueueStatus.SERVED);
+        return queueRepository.findAll()
                 .stream()
+                .filter(t -> activeStatuses.contains(t.getStatus()))
                 .filter(t -> t.getUser().getId().equals(userId))
+                .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
                 .findFirst();
     }
 
@@ -132,5 +157,59 @@ public class QueueService {
     // ✅ Get queue count by status
     public long getQueueCountByStatus(QueueStatus status) {
         return queueRepository.countByStatus(status);
+    }
+
+    public Optional<QueueToken> getCurrentConsultationForDoctor(Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor ID cannot be null");
+        }
+        return queueRepository.findFirstByCounterStaffIdAndStatusInOrderByIdAsc(
+                doctorId,
+                Set.of(QueueStatus.IN_CONSULTATION, QueueStatus.SERVED));
+    }
+
+    public List<QueueToken> getWaitingQueueForDoctor(Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor ID cannot be null");
+        }
+        return queueRepository.findByCounterStaffIdAndStatusOrderByIdAsc(doctorId, QueueStatus.WAITING);
+    }
+
+    public long getWaitingCountForDoctor(Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor ID cannot be null");
+        }
+        return queueRepository.countByCounterStaffIdAndStatus(doctorId, QueueStatus.WAITING);
+    }
+
+    public QueueToken callNextForDoctor(Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor ID cannot be null");
+        }
+
+        Optional<QueueToken> current = getCurrentConsultationForDoctor(doctorId);
+        if (current.isPresent()) {
+            throw new RuntimeException("Current consultation is already in progress.");
+        }
+
+        List<QueueToken> waitingTokens = getWaitingQueueForDoctor(doctorId);
+        if (waitingTokens.isEmpty()) {
+            throw new RuntimeException("No waiting patients in your queue.");
+        }
+
+        QueueToken nextToken = waitingTokens.get(0);
+        nextToken.setStatus(QueueStatus.IN_CONSULTATION);
+        return queueRepository.save(nextToken);
+    }
+
+    public QueueToken completeCurrentConsultationForDoctor(Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor ID cannot be null");
+        }
+
+        QueueToken current = getCurrentConsultationForDoctor(doctorId)
+                .orElseThrow(() -> new RuntimeException("No current consultation to complete."));
+        current.setStatus(QueueStatus.COMPLETED);
+        return queueRepository.save(current);
     }
 }

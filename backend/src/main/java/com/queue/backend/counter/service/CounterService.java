@@ -74,7 +74,9 @@ public class CounterService {
         // Auto-cancel active tokens mapped to this counter when it is closed.
         List<QueueToken> tokens = queueRepository.findByCounterId(counterId);
         for (QueueToken token : tokens) {
-            if (token.getStatus() == QueueStatus.WAITING || token.getStatus() == QueueStatus.SERVED) {
+            if (token.getStatus() == QueueStatus.WAITING
+                    || token.getStatus() == QueueStatus.SERVED
+                    || token.getStatus() == QueueStatus.IN_CONSULTATION) {
                 token.setStatus(QueueStatus.CANCELLED);
                 queueRepository.save(token);
             }
@@ -147,7 +149,9 @@ public class CounterService {
         // Cancel any active tokens from this counter so they disappear for users.
         List<QueueToken> tokens = queueRepository.findByCounterId(id);
         for (QueueToken token : tokens) {
-            if (token.getStatus() == QueueStatus.WAITING || token.getStatus() == QueueStatus.SERVED) {
+            if (token.getStatus() == QueueStatus.WAITING
+                    || token.getStatus() == QueueStatus.SERVED
+                    || token.getStatus() == QueueStatus.IN_CONSULTATION) {
                 token.setStatus(QueueStatus.CANCELLED);
             }
             token.setCounter(null);

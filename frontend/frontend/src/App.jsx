@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Auth from "./components/Auth";
 import UserDashboard from "./components/UserDashboard";
 import AdminDashboard from "./components/AdminDashboard";
+import DoctorDashboard from "./components/DoctorDashboard";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -22,7 +23,10 @@ function App() {
     if (role === 'ADMIN') {
       return <AdminDashboard user={user} onLogout={handleLogout} />;
     }
-    if (role === 'DOCTOR' || role === 'STAFF') {
+    if (role === 'DOCTOR') {
+      return <DoctorDashboard user={user} onLogout={handleLogout} />;
+    }
+    if (role === 'STAFF') {
       return <AdminDashboard user={user} onLogout={handleLogout} />;
     }
     // Fallback for other roles
