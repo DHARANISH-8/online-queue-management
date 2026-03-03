@@ -100,6 +100,19 @@ public class QueueController {
         }
     }
 
+    @PutMapping("/doctor/{doctorId}/start")
+    public ResponseEntity<?> startQueueForDoctor(@PathVariable Long doctorId) {
+        try {
+            QueueService.StartQueueResult result = queueService.startQueueForDoctor(doctorId);
+            return ResponseEntity.ok(Map.of(
+                    "openedCounters", result.openedCounters(),
+                    "notifiedUsers", result.notifiedUsers(),
+                    "message", "Queue has started successfully. Email updates were delivered to " + result.notifiedUsers() + " enrolled patient(s)."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     private Map<String, Object> toDashboardToken(QueueToken token) {
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", token.getId());

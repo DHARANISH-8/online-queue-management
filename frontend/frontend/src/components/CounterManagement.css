@@ -17,6 +17,23 @@
     font-size: 0.875rem;
 }
 
+.doctor-notification {
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #bbf7d0;
+    background: linear-gradient(180deg, #f8fffb 0%, #f0fdf4 100%);
+    color: #166534;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 8px 20px rgba(22, 101, 52, 0.08);
+}
+
+.doctor-notification-title {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
 .toolbar {
     display: flex;
     justify-content: space-between;

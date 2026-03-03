@@ -7,6 +7,7 @@ const CounterManagement = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [doctorNotification, setDoctorNotification] = useState('');
 
     const medicalSpecialties = [
         'General Medicine',
@@ -31,6 +32,12 @@ const CounterManagement = () => {
         fetchCounters();
         fetchDoctors();
     }, []);
+
+    useEffect(() => {
+        if (!doctorNotification) return undefined;
+        const timer = setTimeout(() => setDoctorNotification(''), 5000);
+        return () => clearTimeout(timer);
+    }, [doctorNotification]);
 
     const fetchCounters = async () => {
         try {
@@ -115,10 +122,12 @@ const CounterManagement = () => {
             });
 
             if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                setDoctorNotification(data.message || 'Counter is now active. Queue patients have been notified by email.');
                 fetchCounters();
             } else {
-                const error = await response.text();
-                alert('Error opening counter: ' + error);
+                const data = await response.json().catch(() => ({}));
+                alert('Error opening counter: ' + (data.message || 'Unknown error'));
             }
         } catch (err) {
             console.error('Error opening counter:', err);
@@ -182,6 +191,12 @@ const CounterManagement = () => {
                 <h2>Counters</h2>
                 <p>Manage service counters, assign doctors, and monitor live status.</p>
             </div>
+            {doctorNotification && (
+                <div className="doctor-notification" role="status" aria-live="polite">
+                    <div className="doctor-notification-title">Notification Summary</div>
+                    <div>{doctorNotification}</div>
+                </div>
+            )}
 
             <div className="toolbar">
                 <div className="search-box">

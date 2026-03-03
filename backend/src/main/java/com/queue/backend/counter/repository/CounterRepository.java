@@ -11,5 +11,6 @@ import java.util.List;
 public interface CounterRepository extends JpaRepository<Counter, Long> {
 
     List<Counter> findByStatus(CounterStatus status);
+    List<Counter> findByStaffId(Long staffId);
 
 }

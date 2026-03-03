@@ -13,6 +13,8 @@ const DoctorDashboard = ({ user, onLogout }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isCallingNext, setIsCallingNext] = useState(false);
     const [isCompleting, setIsCompleting] = useState(false);
+    const [isStartingQueue, setIsStartingQueue] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const [lastUpdated, setLastUpdated] = useState(null);
 
     const doctorName = useMemo(() => (user?.name || 'Doctor'), [user]);
@@ -46,6 +48,35 @@ const DoctorDashboard = ({ user, onLogout }) => {
         const intervalId = setInterval(fetchDashboard, POLL_INTERVAL_MS);
         return () => clearInterval(intervalId);
     }, [fetchDashboard]);
+
+    useEffect(() => {
+        if (!successMessage) {
+            return undefined;
+        }
+        const timer = setTimeout(() => setSuccessMessage(''), 5000);
+        return () => clearTimeout(timer);
+    }, [successMessage]);
+
+    const handleStartQueue = async () => {
+        if (!user?.id) {
+            return;
+        }
+        setIsStartingQueue(true);
+        try {
+            const response = await fetch(`/api/queue/doctor/${user.id}/start`, { method: 'PUT' });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Unable to start queue.');
+            }
+            setError('');
+            setSuccessMessage(data.message || 'Queue is live. Patients enrolled under your queue were notified by email.');
+            await fetchDashboard();
+        } catch (err) {
+            setError(err.message || 'Unable to start queue.');
+        } finally {
+            setIsStartingQueue(false);
+        }
+    };
 
     const handleCallNext = async () => {
         if (!user?.id) {
@@ -123,7 +154,18 @@ const DoctorDashboard = ({ user, onLogout }) => {
                 </div>
             </header>
 
-            {error && <div className="doctor-error">{error}</div>}
+            {error && (
+                <div className="doctor-error" role="alert">
+                    <div className="doctor-alert-title">Unable to process request</div>
+                    <div>{error}</div>
+                </div>
+            )}
+            {successMessage && (
+                <div className="doctor-success" role="status" aria-live="polite">
+                    <div className="doctor-alert-title">Queue started</div>
+                    <div>{successMessage}</div>
+                </div>
+            )}
 
             <section className="doctor-current-card">
                 <div className="doctor-current-head">
@@ -149,6 +191,13 @@ const DoctorDashboard = ({ user, onLogout }) => {
                 )}
 
                 <div className="doctor-actions">
+                    <button
+                        className="btn-start"
+                        onClick={handleStartQueue}
+                        disabled={isStartingQueue}
+                    >
+                        {isStartingQueue ? 'Starting...' : 'Start Queue'}
+                    </button>
                     <button
                         className="btn-primary"
                         onClick={handleCallNext}

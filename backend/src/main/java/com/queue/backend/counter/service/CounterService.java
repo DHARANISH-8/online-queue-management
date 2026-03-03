@@ -3,6 +3,7 @@ package com.queue.backend.counter.service;
 import com.queue.backend.counter.entity.Counter;
 import com.queue.backend.counter.entity.CounterStatus;
 import com.queue.backend.counter.repository.CounterRepository;
+import com.queue.backend.notification.service.EmailService;
 import com.queue.backend.queue.QueueRepository;
 import com.queue.backend.queue.QueueStatus;
 import com.queue.backend.queue.QueueToken;
@@ -11,20 +12,27 @@ import com.queue.backend.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CounterService {
 
+    public record OpenCounterResult(Counter counter, int notifiedUsersCount) {
+    }
+
     private final CounterRepository counterRepository;
     private final UserRepository userRepository;
     private final QueueRepository queueRepository;
+    private final EmailService emailService;
 
     public CounterService(CounterRepository counterRepository,
             UserRepository userRepository,
-            QueueRepository queueRepository) {
+            QueueRepository queueRepository,
+            EmailService emailService) {
         this.counterRepository = counterRepository;
         this.userRepository = userRepository;
         this.queueRepository = queueRepository;
+        this.emailService = emailService;
     }
 
     // Create new counter
@@ -50,7 +58,7 @@ public class CounterService {
     }
 
     // Open counter
-    public Counter openCounter(Long counterId) {
+    public OpenCounterResult openCounter(Long counterId) {
         if (counterId == null) {
             throw new RuntimeException("Counter ID cannot be null");
         }
@@ -59,7 +67,20 @@ public class CounterService {
                 .orElseThrow(() -> new RuntimeException("Counter not found"));
 
         counter.setStatus(CounterStatus.OPEN);
-        return counterRepository.save(counter);
+        Counter savedCounter = counterRepository.save(counter);
+
+        List<QueueToken> tokens = queueRepository.findByCounterId(counterId);
+        Set<Long> notifiedUsers = new java.util.HashSet<>();
+        for (QueueToken token : tokens) {
+            if (token.getStatus() == QueueStatus.WAITING && token.getUser() != null && token.getUser().getId() != null) {
+                Long userId = token.getUser().getId();
+                if (notifiedUsers.add(userId)) {
+                    emailService.sendCounterStarted(token.getUser(), savedCounter, token);
+                }
+            }
+        }
+
+        return new OpenCounterResult(savedCounter, notifiedUsers.size());
     }
 
     // Close counter

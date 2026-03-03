@@ -8,22 +8,28 @@ import java.util.Set;
 import com.queue.backend.counter.entity.Counter;
 import com.queue.backend.counter.entity.CounterStatus;
 import com.queue.backend.counter.repository.CounterRepository;
+import com.queue.backend.notification.service.EmailService;
 import com.queue.backend.user.entity.User;
 import com.queue.backend.user.repository.UserRepository;
 
 @Service
 public class QueueService {
+    public record StartQueueResult(int openedCounters, int notifiedUsers) {
+    }
 
     private final QueueRepository queueRepository;
     private final UserRepository userRepository;
     private final CounterRepository counterRepository;
+    private final EmailService emailService;
 
     public QueueService(QueueRepository queueRepository,
             UserRepository userRepository,
-            CounterRepository counterRepository) {
+            CounterRepository counterRepository,
+            EmailService emailService) {
         this.queueRepository = queueRepository;
         this.userRepository = userRepository;
         this.counterRepository = counterRepository;
+        this.emailService = emailService;
     }
 
     // ✅ Generate Token (AUTO INCREMENT SAFE)
@@ -98,7 +104,9 @@ public class QueueService {
                 (serviceType == null || serviceType.isBlank()) ? selectedCounter.getServiceType() : serviceType);
         token.setCounter(selectedCounter);
 
-        return queueRepository.save(token);
+        QueueToken savedToken = queueRepository.save(token);
+        emailService.sendAppointmentBookingSuccess(user, savedToken);
+        return savedToken;
     }
 
     // ✅ Get active token for user
@@ -211,5 +219,46 @@ public class QueueService {
                 .orElseThrow(() -> new RuntimeException("No current consultation to complete."));
         current.setStatus(QueueStatus.COMPLETED);
         return queueRepository.save(current);
+    }
+
+    public StartQueueResult startQueueForDoctor(Long doctorId) {
+        if (doctorId == null) {
+            throw new RuntimeException("Doctor ID cannot be null");
+        }
+
+        User doctor = userRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        String role = doctor.getRole() == null ? "" : doctor.getRole().toUpperCase();
+        if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
+            throw new RuntimeException("Selected user is not a doctor");
+        }
+
+        List<Counter> doctorCounters = counterRepository.findByStaffId(doctorId);
+        if (doctorCounters.isEmpty()) {
+            throw new RuntimeException("No counter assigned to this doctor.");
+        }
+
+        int openedCounters = 0;
+        for (Counter counter : doctorCounters) {
+            if (counter.getStatus() != CounterStatus.OPEN) {
+                counter.setStatus(CounterStatus.OPEN);
+                counterRepository.save(counter);
+                openedCounters++;
+            }
+        }
+
+        List<QueueToken> waitingTokens = queueRepository.findByCounterStaffIdAndStatusOrderByIdAsc(doctorId, QueueStatus.WAITING);
+        java.util.Set<Long> notifiedUsers = new java.util.HashSet<>();
+        for (QueueToken token : waitingTokens) {
+            if (token.getUser() == null || token.getUser().getId() == null) {
+                continue;
+            }
+            Long userId = token.getUser().getId();
+            if (notifiedUsers.add(userId)) {
+                emailService.sendDoctorQueueStarted(token.getUser(), doctor, token.getCounter(), token);
+            }
+        }
+
+        return new StartQueueResult(openedCounters, notifiedUsers.size());
     }
 }

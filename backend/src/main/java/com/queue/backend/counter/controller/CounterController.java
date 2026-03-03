@@ -40,8 +40,16 @@ public class CounterController {
     }
 
     @PutMapping("/{id}/open")
-    public Counter openCounter(@PathVariable Long id) {
-        return counterService.openCounter(id);
+    public ResponseEntity<?> openCounter(@PathVariable Long id) {
+        try {
+            CounterService.OpenCounterResult result = counterService.openCounter(id);
+            return ResponseEntity.ok(Map.of(
+                    "counter", result.counter(),
+                    "notifiedUsersCount", result.notifiedUsersCount(),
+                    "message", "Counter is now active. Email notifications were sent to " + result.notifiedUsersCount() + " queued patient(s)."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}/close")
