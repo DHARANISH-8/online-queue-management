@@ -24,6 +24,11 @@ public class CounterController {
         return counterService.getAllCounters();
     }
 
+    @GetMapping("/summary")
+    public List<CounterService.CounterSummary> getCounterSummaries() {
+        return counterService.getCounterSummaries();
+    }
+
     @GetMapping("/open")
     public List<Counter> getOpenCounters() {
         return counterService.getOpenCounters();
@@ -55,6 +60,27 @@ public class CounterController {
     @PutMapping("/{id}/close")
     public Counter closeCounter(@PathVariable Long id) {
         return counterService.closeCounter(id);
+    }
+
+    @PostMapping("/{id}/serve")
+    public ResponseEntity<?> serveNextToken(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(counterService.serveNextToken(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCounter(@PathVariable Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String serviceType,
+            @RequestParam(required = false) Long doctorId) {
+        try {
+            return ResponseEntity.ok(counterService.updateCounter(id, name, serviceType, doctorId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping("/services")

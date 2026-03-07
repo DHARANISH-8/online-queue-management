@@ -13,6 +13,8 @@ public interface QueueRepository extends JpaRepository<QueueToken, Long> {
 
     List<QueueToken> findByCounterId(Long counterId);
 
+    List<QueueToken> findByCounterIdAndStatusOrderByTokenNumberAsc(Long counterId, QueueStatus status);
+
     long countByStatus(QueueStatus status);
 
     Optional<QueueToken> findFirstByOrderByTokenNumberDesc();
@@ -24,4 +26,12 @@ public interface QueueRepository extends JpaRepository<QueueToken, Long> {
     Optional<QueueToken> findFirstByCounterStaffIdAndStatusInOrderByIdAsc(Long doctorId, Collection<QueueStatus> statuses);
 
     long countByCounterStaffIdAndStatus(Long doctorId, QueueStatus status);
+
+    long countByCounterIdAndStatusIn(Long counterId, Collection<QueueStatus> statuses);
+
+    Optional<QueueToken> findFirstByCounterIdAndStatusInOrderByIdDesc(Long counterId, Collection<QueueStatus> statuses);
+
+    long countByStatusIn(Collection<QueueStatus> statuses);
+
+    Optional<QueueToken> findFirstByStatusInOrderByIdDesc(Collection<QueueStatus> statuses);
 }

@@ -20,6 +20,17 @@ public class CounterService {
     public record OpenCounterResult(Counter counter, int notifiedUsersCount) {
     }
 
+    public record CounterSummary(
+            Long id,
+            String counterName,
+            String serviceType,
+            String status,
+            Long doctorId,
+            String doctorName,
+            long assignedPatients,
+            String currentServingToken) {
+    }
+
     private final CounterRepository counterRepository;
     private final UserRepository userRepository;
     private final QueueRepository queueRepository;
@@ -112,6 +123,32 @@ public class CounterService {
         return counterRepository.findAll();
     }
 
+    public List<CounterSummary> getCounterSummaries() {
+        return counterRepository.findAll().stream()
+                .map(counter -> {
+                    long assignedPatients = queueRepository.countByCounterIdAndStatusIn(
+                            counter.getId(),
+                            Set.of(QueueStatus.WAITING, QueueStatus.IN_CONSULTATION));
+                    String currentServing = queueRepository.findFirstByCounterIdAndStatusInOrderByIdDesc(
+                            counter.getId(),
+                            Set.of(QueueStatus.IN_CONSULTATION, QueueStatus.SERVED))
+                            .map(token -> counter.getCounterName() + "-" + String.format("%03d", token.getTokenNumber()))
+                            .orElse("-");
+                    Long doctorId = counter.getStaff() != null ? counter.getStaff().getId() : null;
+                    String doctorName = counter.getStaff() != null ? counter.getStaff().getName() : null;
+                    return new CounterSummary(
+                            counter.getId(),
+                            counter.getCounterName(),
+                            counter.getServiceType(),
+                            counter.getStatus().name(),
+                            doctorId,
+                            doctorName,
+                            assignedPatients,
+                            currentServing);
+                })
+                .toList();
+    }
+
     // Get only open counters
     public List<Counter> getOpenCounters() {
         return counterRepository.findByStatus(CounterStatus.OPEN);
@@ -131,7 +168,7 @@ public class CounterService {
             throw new RuntimeException("Counter is not open");
         }
 
-        List<QueueToken> waitingTokens = queueRepository.findByStatusOrderByTokenNumberAsc(QueueStatus.WAITING);
+        List<QueueToken> waitingTokens = queueRepository.findByCounterIdAndStatusOrderByTokenNumberAsc(counterId, QueueStatus.WAITING);
 
         if (waitingTokens.isEmpty()) {
             throw new RuntimeException("No waiting tokens");
@@ -139,10 +176,37 @@ public class CounterService {
 
         QueueToken token = waitingTokens.get(0);
 
-        token.setStatus(QueueStatus.SERVED);
+        token.setStatus(QueueStatus.IN_CONSULTATION);
         token.setCounter(counter);
 
         return queueRepository.save(token);
+    }
+
+    public Counter updateCounter(Long id, String counterName, String serviceType, Long doctorId) {
+        if (id == null) {
+            throw new RuntimeException("Counter ID cannot be null");
+        }
+        Counter counter = counterRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Counter not found"));
+
+        if (counterName != null && !counterName.isBlank()) {
+            counter.setCounterName(counterName.trim());
+        }
+        if (serviceType != null && !serviceType.isBlank()) {
+            counter.setServiceType(serviceType.trim());
+        }
+
+        if (doctorId != null) {
+            User doctor = userRepository.findById(doctorId)
+                    .orElseThrow(() -> new RuntimeException("Doctor not found"));
+            String role = doctor.getRole() == null ? "" : doctor.getRole().toUpperCase();
+            if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
+                throw new RuntimeException("Selected user is not a doctor");
+            }
+            counter.setStaff(doctor);
+        }
+
+        return counterRepository.save(counter);
     }
 
     // Get unique service types - returns default services if no counters exist

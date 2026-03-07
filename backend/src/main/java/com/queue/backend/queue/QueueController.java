@@ -67,6 +67,16 @@ public class QueueController {
         return queueService.getActiveTokenForUser(userId).orElse(null);
     }
 
+    @GetMapping("/user/{userId}/status")
+    public ResponseEntity<?> getUserQueueStatus(@PathVariable Long userId) {
+        return ResponseEntity.ok(queueService.getUserQueueStatus(userId).orElse(null));
+    }
+
+    @GetMapping("/admin/overview")
+    public ResponseEntity<?> getAdminOverview() {
+        return ResponseEntity.ok(queueService.getAdminOverview());
+    }
+
     @GetMapping("/doctor/{doctorId}/dashboard")
     public ResponseEntity<?> getDoctorDashboard(@PathVariable Long doctorId) {
         try {

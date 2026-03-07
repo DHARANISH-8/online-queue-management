@@ -1,11 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Auth from "./components/Auth";
 import UserDashboard from "./components/UserDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import DoctorDashboard from "./components/DoctorDashboard";
 
+const AUTH_STORAGE_KEY = 'apolloq_user';
+
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+  }, [user]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -16,8 +33,8 @@ function App() {
   };
 
   if (user) {
-    const role = user.role.toUpperCase();
-    if (role === 'CUSTOMER' || role === 'USER') {
+    const role = (user.role || '').toUpperCase();
+    if (role === 'CUSTOMER' || role === 'USER' || role === 'PATIENT') {
       return <UserDashboard user={user} onLogout={handleLogout} />;
     }
     if (role === 'ADMIN') {

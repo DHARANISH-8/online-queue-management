@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './AdminDashboard.css';
 import CounterManagement from './CounterManagement';
+import UserManagement from './UserManagement';
 
 const AdminDashboard = ({ user, onLogout }) => {
     const medicalSpecialties = [
@@ -28,39 +29,53 @@ const AdminDashboard = ({ user, onLogout }) => {
     const [tokenError, setTokenError] = useState('');
     const [tokenSuccess, setTokenSuccess] = useState('');
     const [isCreatingToken, setIsCreatingToken] = useState(false);
-
-    const stats = [
-        { id: 1, label: 'Total Tokens Today', value: '1,560', trend: '+8% vs yesterday', trendUp: true, iconBg: '#eff6ff', iconColor: '#2563eb' },
-        { id: 2, label: 'Tokens Waiting', value: '42', trend: 'Within normal range', trendUp: null, iconBg: '#fff7ed', iconColor: '#f97316' },
-        { id: 3, label: 'Tokens Served', value: '1,210', trend: '+5% vs avg', trendUp: true, iconBg: '#f0fdf4', iconColor: '#10b981' },
-        { id: 4, label: 'Tokens Cancelled', value: '35', trend: '2.2% of total', trendUp: false, iconBg: '#fef2f2', iconColor: '#ef4444' },
-        { id: 5, label: 'Active Counters', value: '8', trend: '2 offline', trendUp: null, iconBg: '#eff6ff', iconColor: '#3b82f6' },
-        { id: 6, label: 'Average Waiting Time', value: '4m 12s', trend: '-20s vs yesterday', trendUp: true, iconBg: '#f0fdf4', iconColor: '#10b981' },
-    ];
-
-    const counters = [
-        { id: '01', status: 'ACTIVE', token: 'A-104', type: 'Gen. Inquiry' },
-        { id: '02', status: 'ACTIVE', token: 'A-105', type: 'Gen. Inquiry' },
-        { id: '03', status: 'ON BREAK', token: '--', type: 'Loans' },
-        { id: '04', status: 'ACTIVE', token: 'B-042', type: 'Deposits' },
-        { id: '05', status: 'ACTIVE', token: 'B-043', type: 'Deposits' },
-        { id: '06', status: 'CLOSED', token: '--', type: 'VIP Services' },
-    ];
-
-    const activities = [
-        { id: 1, token: 'Token A-105', action: 'Called at Counter 02', time: 'Just now' },
-        { id: 2, token: 'Token B-043', action: 'Completed at Counter 05', time: '2m ago' },
-        { id: 3, token: 'Token C-002', action: 'Issued from Kiosk 1', time: '4m ago' },
-        { id: 4, token: 'Token A-104', action: 'Started at Counter 01', time: '5m ago' },
-        { id: 5, token: 'Token B-042', action: 'Called at Counter 04', time: '8m ago' },
-        { id: 6, token: 'Token A-103', action: 'Completed at Counter 01', time: '10m ago' },
-    ];
+    const [overview, setOverview] = useState({
+        totalWaitingPatients: 0,
+        currentlyServingToken: '-',
+        activeCounters: 0,
+        activeDoctors: 0,
+        counters: []
+    });
+    const [overviewError, setOverviewError] = useState('');
 
     useEffect(() => {
         if (showTokenModal) {
             fetchDoctors();
         }
     }, [showTokenModal]);
+
+    useEffect(() => {
+        fetchOverview();
+        const interval = setInterval(fetchOverview, 8000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchOverview = async () => {
+        try {
+            const response = await fetch('/api/queue/admin/overview');
+            if (!response.ok) {
+                throw new Error('Failed to load dashboard overview');
+            }
+            const data = await response.json();
+            setOverview({
+                totalWaitingPatients: data.totalWaitingPatients ?? 0,
+                currentlyServingToken: data.currentlyServingToken || '-',
+                activeCounters: data.activeCounters ?? 0,
+                activeDoctors: data.activeDoctors ?? 0,
+                counters: Array.isArray(data.counters) ? data.counters : []
+            });
+            setOverviewError('');
+        } catch (err) {
+            setOverviewError(err.message || 'Unable to load dashboard data');
+        }
+    };
+
+    const stats = [
+        { id: 1, label: 'Patients Waiting', value: String(overview.totalWaitingPatients), trend: 'Live queue count', trendUp: null, iconBg: '#fff7ed', iconColor: '#f97316' },
+        { id: 2, label: 'Currently Serving', value: overview.currentlyServingToken || '-', trend: 'Latest active token', trendUp: null, iconBg: '#eff6ff', iconColor: '#2563eb' },
+        { id: 3, label: 'Active Counters', value: String(overview.activeCounters), trend: 'Open consultation points', trendUp: null, iconBg: '#f0fdf4', iconColor: '#10b981' },
+        { id: 4, label: 'Active Doctors', value: String(overview.activeDoctors), trend: 'Doctors with open counters', trendUp: null, iconBg: '#fef2f2', iconColor: '#ef4444' },
+    ];
 
     const fetchDoctors = async () => {
         try {
@@ -108,6 +123,7 @@ const AdminDashboard = ({ user, onLogout }) => {
             const data = await response.json();
             setTokenSuccess(`Token created successfully: #${data.tokenNumber}`);
             setTokenForm({ userId: '', serviceType: medicalSpecialties[0], doctorId: '' });
+            fetchOverview();
         } catch (err) {
             setTokenError(err.message || 'Failed to create token');
         } finally {
@@ -141,10 +157,6 @@ const AdminDashboard = ({ user, onLogout }) => {
                     <a href="#" className={`nav-item ${view === 'users' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setView('users'); }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         User Mgmt
-                    </a>
-                    <a href="#" className={`nav-item ${view === 'settings' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setView('settings'); }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        Settings
                     </a>
                 </nav>
 
@@ -188,8 +200,9 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <>
                             <div className="dashboard-title">
                                 <h2>Dashboard Overview</h2>
-                                <p>Welcome back! Here is what is happening in your queue today.</p>
+                                <p>Real-time queue monitoring for administrators.</p>
                             </div>
+                            {overviewError && <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{overviewError}</p>}
                             <div className="stats-grid">
                                 {stats.map((stat) => (
                                     <div key={stat.id} className="stat-card">
@@ -212,15 +225,15 @@ const AdminDashboard = ({ user, onLogout }) => {
                                         <a href="#" className="view-all" onClick={(e) => { e.preventDefault(); setView('counters'); }}>View All</a>
                                     </div>
                                     <div className="counter-grid">
-                                        {counters.map((counter) => (
+                                        {overview.counters.slice(0, 6).map((counter) => (
                                             <div key={counter.id} className="counter-card">
-                                                <span className={`status-badge ${counter.status === 'ACTIVE' ? 'status-active' : counter.status === 'ON BREAK' ? 'status-break' : 'status-closed'}`}>
+                                                <span className={`status-badge ${counter.status === 'OPEN' ? 'status-active' : counter.status === 'BUSY' ? 'status-break' : 'status-closed'}`}>
                                                     {counter.status}
                                                 </span>
                                                 <div className="counter-info">
-                                                    <h4>Counter {counter.id}</h4>
-                                                    <div className="token-number">{counter.token}</div>
-                                                    <div className="service-type">{counter.type}</div>
+                                                    <h4>{counter.counterName || `Counter ${counter.id}`}</h4>
+                                                    <div className="token-number">{counter.currentServingToken || '-'}</div>
+                                                    <div className="service-type">{counter.serviceType || 'General'} | Waiting: {counter.assignedPatients ?? 0}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -229,18 +242,26 @@ const AdminDashboard = ({ user, onLogout }) => {
 
                                 <div className="card-container">
                                     <div className="card-header">
-                                        <h3>Recent Activity</h3>
+                                        <h3>Doctors / Counters</h3>
                                     </div>
                                     <div className="activity-list">
-                                        {activities.map((activity) => (
-                                            <div key={activity.id} className="activity-item">
+                                        {overview.counters.slice(0, 6).map((counter) => (
+                                            <div key={counter.id} className="activity-item">
                                                 <div className="activity-info">
-                                                    <h4>{activity.token}</h4>
-                                                    <p>{activity.action}</p>
+                                                    <h4>{counter.doctorName || 'Unassigned doctor'}</h4>
+                                                    <p>{counter.counterName} | {counter.serviceType || 'General'}</p>
                                                 </div>
-                                                <span className="activity-time">{activity.time}</span>
+                                                <span className="activity-time">Waiting: {counter.assignedPatients ?? 0}</span>
                                             </div>
                                         ))}
+                                        {overview.counters.length === 0 && (
+                                            <div className="activity-item">
+                                                <div className="activity-info">
+                                                    <h4>No counters found</h4>
+                                                    <p>Create counters to start queue operations.</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -268,26 +289,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                             </button>
                         </div>
                     )}
-                    {['users', 'settings'].includes(view) && (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            <h2>{view.charAt(0).toUpperCase() + view.slice(1)} Page Coming Soon</h2>
-                            <p>We are currently working on this feature. Stay tuned!</p>
-                            <button
-                                onClick={() => setView('overview')}
-                                style={{
-                                    marginTop: '1.5rem',
-                                    padding: '0.5rem 1rem',
-                                    backgroundColor: 'var(--primary-color)',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Back to Dashboard
-                            </button>
-                        </div>
-                    )}
+                    {view === 'users' && <UserManagement />}
                 </div>
             </main>
 

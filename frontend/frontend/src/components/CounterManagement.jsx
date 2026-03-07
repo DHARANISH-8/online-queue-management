@@ -5,6 +5,7 @@ const CounterManagement = () => {
     const [counters, setCounters] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [doctorNotification, setDoctorNotification] = useState('');
@@ -27,6 +28,12 @@ const CounterManagement = () => {
         serviceType: medicalSpecialties[0],
         doctorId: ''
     });
+    const [editCounter, setEditCounter] = useState({
+        id: null,
+        name: '',
+        serviceType: medicalSpecialties[0],
+        doctorId: ''
+    });
 
     useEffect(() => {
         fetchCounters();
@@ -41,7 +48,7 @@ const CounterManagement = () => {
 
     const fetchCounters = async () => {
         try {
-            const response = await fetch('/api/counters');
+            const response = await fetch('/api/counters/summary');
             const data = await response.json();
             setCounters(data);
             setIsLoading(false);
@@ -173,6 +180,43 @@ const CounterManagement = () => {
         }
     };
 
+    const openEditModal = (counter) => {
+        setEditCounter({
+            id: counter.id,
+            name: counter.counterName || '',
+            serviceType: counter.serviceType || medicalSpecialties[0],
+            doctorId: counter.doctorId ? String(counter.doctorId) : ''
+        });
+        setError('');
+        setShowEditModal(true);
+    };
+
+    const handleUpdateCounter = async (e) => {
+        e.preventDefault();
+        if (!editCounter.id) return;
+        setError('');
+        try {
+            const params = new URLSearchParams();
+            params.append('name', editCounter.name);
+            params.append('serviceType', editCounter.serviceType);
+            if (editCounter.doctorId) {
+                params.append('doctorId', editCounter.doctorId);
+            }
+
+            const response = await fetch(`/api/counters/${editCounter.id}?${params.toString()}`, {
+                method: 'PUT'
+            });
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || 'Failed to update counter');
+            }
+            setShowEditModal(false);
+            fetchCounters();
+        } catch (err) {
+            setError(err.message || 'Error updating counter');
+        }
+    };
+
     const getStatusClass = (status) => {
         if (!status) return '';
         switch (status.toLowerCase()) {
@@ -229,7 +273,10 @@ const CounterManagement = () => {
                             <tr>
                                 <th>ID</th>
                                 <th>Counter Name</th>
+                                <th>Doctor</th>
                                 <th>Status</th>
+                                <th>Waiting</th>
+                                <th>Current Token</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -241,11 +288,14 @@ const CounterManagement = () => {
                                         <span className="name">{counter.counterName}</span>
                                         <span className="dept">{counter.serviceType}</span>
                                     </td>
+                                    <td>{counter.doctorName || 'Unassigned'}</td>
                                     <td className="status-cell">
                                         <span className={`status-badge ${getStatusClass(counter.status)}`}>
                                             {counter.status}
                                         </span>
                                     </td>
+                                    <td>{counter.assignedPatients ?? 0}</td>
+                                    <td>{counter.currentServingToken || '-'}</td>
                                     <td className="actions-cell">
                                         {counter.status === 'CLOSED' ? (
                                             <button className="action-btn open" onClick={() => handleOpenCounter(counter.id)} title="Open Counter">
@@ -261,6 +311,9 @@ const CounterManagement = () => {
                                                 </button>
                                             </>
                                         )}
+                                        <button className="action-btn open" onClick={() => openEditModal(counter)} title="Edit Counter">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+                                        </button>
                                         <button className="action-btn delete" onClick={() => handleDeleteCounter(counter.id)} title="Delete Counter">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                         </button>
@@ -268,7 +321,7 @@ const CounterManagement = () => {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                                         No counters found. Create one to get started.
                                     </td>
                                 </tr>
@@ -327,6 +380,60 @@ const CounterManagement = () => {
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary" disabled={!newCounter.doctorId}>Create Counter</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showEditModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3>Edit Counter</h3>
+                            <button className="close-btn" onClick={() => setShowEditModal(false)}>&times;</button>
+                        </div>
+                        {error && <div style={{ color: '#dc2626', marginBottom: '0.75rem' }}>{error}</div>}
+                        <form onSubmit={handleUpdateCounter}>
+                            <div className="form-group">
+                                <label>Counter Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editCounter.name}
+                                    onChange={(e) => setEditCounter({ ...editCounter, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Department / Specialty</label>
+                                <select
+                                    value={editCounter.serviceType}
+                                    onChange={(e) => setEditCounter({ ...editCounter, serviceType: e.target.value })}
+                                >
+                                    {medicalSpecialties.map((specialty) => (
+                                        <option key={specialty} value={specialty}>{specialty}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Select Doctor</label>
+                                <select
+                                    required
+                                    value={editCounter.doctorId}
+                                    onChange={(e) => setEditCounter({ ...editCounter, doctorId: e.target.value })}
+                                >
+                                    <option value="">Choose doctor</option>
+                                    {doctors.map((doctor) => (
+                                        <option key={doctor.id} value={doctor.id}>
+                                            {doctor.name} ({doctor.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="modal-footer">
+                                <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={!editCounter.doctorId}>Update Counter</button>
                             </div>
                         </form>
                     </div>

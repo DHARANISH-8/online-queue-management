@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './UserDashboard.css';
 
+const POLL_INTERVAL_MS = 5000;
+
 const UserDashboard = ({ user, onLogout }) => {
     const [openCounters, setOpenCounters] = useState([]);
     const [selectedCounterId, setSelectedCounterId] = useState('');
@@ -14,6 +16,16 @@ const UserDashboard = ({ user, onLogout }) => {
             fetchActiveToken();
         }
     }, [user]);
+
+    useEffect(() => {
+        if (!user?.id) return undefined;
+
+        const intervalId = setInterval(() => {
+            fetchActiveToken();
+        }, POLL_INTERVAL_MS);
+
+        return () => clearInterval(intervalId);
+    }, [user?.id]);
 
     const fetchServices = async () => {
         try {
@@ -37,19 +49,19 @@ const UserDashboard = ({ user, onLogout }) => {
 
     const fetchActiveToken = async () => {
         try {
-            const response = await fetch(`/api/queue/user/${user.id}`);
+            const response = await fetch(`/api/queue/user/${user.id}/status`);
             if (response.ok) {
                 const data = await response.json();
                 if (data) {
                     setActiveToken({
-                        id: data.id,
-                        number: `${data.counter?.counterName || 'Counter'}-${String(data.tokenNumber).padStart(3, '0')}`,
+                        id: data.tokenId,
+                        number: data.yourToken,
+                        nowServing: data.nowServing || '-',
                         status: data.status,
-                        position: 'Calculating...', // This would need another API or logic
-                        waitTime: '~10 min',
-                        peopleAhead: 0, // This would need another API
-                        serviceType: data.serviceType || data.counter?.serviceType || 'General',
-                        counterName: data.counter?.counterName || 'N/A'
+                        waitTimeMinutes: Number(data.estimatedWaitingTimeMinutes || 0),
+                        peopleAhead: Number(data.peopleAhead || 0),
+                        serviceType: data.serviceType || 'General',
+                        counterName: data.counterName || 'N/A'
                     });
                 } else {
                     setActiveToken(null);
@@ -228,14 +240,21 @@ const UserDashboard = ({ user, onLogout }) => {
 
                             <div className="token-metrics">
                                 <div className="metric">
-                                    <span className="metric-label">Counter</span>
-                                    <span className="metric-value">{activeToken.counterName}</span>
+                                    <span className="metric-label">Your Token</span>
+                                    <span className="metric-value">{activeToken.number}</span>
                                 </div>
                                 <div className="metric">
-                                    <span className="metric-label">Service Type</span>
-                                    <span className="metric-value">{activeToken.serviceType}</span>
+                                    <span className="metric-label">Now Serving</span>
+                                    <span className="metric-value">{activeToken.nowServing}</span>
                                 </div>
-                                {/* Other metrics can be added later */}
+                                <div className="metric">
+                                    <span className="metric-label">People Ahead</span>
+                                    <span className="metric-value">{activeToken.peopleAhead}</span>
+                                </div>
+                                <div className="metric">
+                                    <span className="metric-label">Estimated Waiting Time</span>
+                                    <span className="metric-value">{activeToken.waitTimeMinutes} min</span>
+                                </div>
                             </div>
 
                             <button className="btn-cancel" onClick={handleCancelToken}>

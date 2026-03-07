@@ -144,7 +144,7 @@ const Auth = ({ onLogin }) => {
                                 </button>
                                 <button
                                     className={`auth-tab ${!isLogin ? 'active' : ''}`}
-                                    onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
+                                    onClick={() => { setIsLogin(false); setRole('CUSTOMER'); setError(''); setSuccess(''); }}
                                 >
                                     Sign Up
                                 </button>
@@ -242,36 +242,51 @@ const Auth = ({ onLogin }) => {
                                 <div className="form-group">
                                     <label>Role</label>
                                     <div className="role-selection">
-                                        <div
-                                            className={`role-card ${role === 'CUSTOMER' ? 'active' : ''}`}
-                                            onClick={() => setRole('CUSTOMER')}
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                                <circle cx="12" cy="7" r="4"></circle>
-                                            </svg>
-                                            <span>User</span>
-                                        </div>
-                                        <div
-                                            className={`role-card ${role === 'DOCTOR' ? 'active' : ''}`}
-                                            onClick={() => setRole('DOCTOR')}
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M12 2v20"></path>
-                                                <path d="M17 7H7"></path>
-                                                <path d="M17 17H7"></path>
-                                            </svg>
-                                            <span>Doctor</span>
-                                        </div>
-                                        <div
-                                            className={`role-card ${role === 'ADMIN' ? 'active' : ''}`}
-                                            onClick={() => setRole('ADMIN')}
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                            </svg>
-                                            <span>Admin</span>
-                                        </div>
+                                        {isLogin ? (
+                                            <>
+                                                <div
+                                                    className={`role-card ${role === 'CUSTOMER' ? 'active' : ''}`}
+                                                    onClick={() => setRole('CUSTOMER')}
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                        <circle cx="12" cy="7" r="4"></circle>
+                                                    </svg>
+                                                    <span>Patient</span>
+                                                </div>
+                                                <div
+                                                    className={`role-card ${role === 'DOCTOR' ? 'active' : ''}`}
+                                                    onClick={() => setRole('DOCTOR')}
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M12 2v20"></path>
+                                                        <path d="M17 7H7"></path>
+                                                        <path d="M17 17H7"></path>
+                                                    </svg>
+                                                    <span>Doctor</span>
+                                                </div>
+                                                <div
+                                                    className={`role-card ${role === 'ADMIN' ? 'active' : ''}`}
+                                                    onClick={() => setRole('ADMIN')}
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                                    </svg>
+                                                    <span>Admin</span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div
+                                                className="role-card active"
+                                                onClick={() => setRole('CUSTOMER')}
+                                            >
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                    <circle cx="12" cy="7" r="4"></circle>
+                                                </svg>
+                                                <span>Patient</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

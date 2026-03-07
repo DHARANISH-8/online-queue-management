@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.queue.backend.counter.entity.Counter;
 import com.queue.backend.counter.entity.CounterStatus;
@@ -16,6 +19,30 @@ import com.queue.backend.user.repository.UserRepository;
 public class QueueService {
     public record StartQueueResult(int openedCounters, int notifiedUsers) {
     }
+
+    public record UserQueueStatus(
+            Long tokenId,
+            String yourToken,
+            String nowServing,
+            int peopleAhead,
+            int estimatedWaitingTimeMinutes,
+            String status,
+            String counterName,
+            String serviceType) {
+    }
+
+    public record CounterDashboardItem(
+            Long id,
+            String counterName,
+            String serviceType,
+            String status,
+            Long doctorId,
+            String doctorName,
+            long assignedPatients,
+            String currentServingToken) {
+    }
+
+    private static final int AVG_CONSULTATION_MINUTES = 5;
 
     private final QueueRepository queueRepository;
     private final UserRepository userRepository;
@@ -260,5 +287,110 @@ public class QueueService {
         }
 
         return new StartQueueResult(openedCounters, notifiedUsers.size());
+    }
+
+    public Optional<UserQueueStatus> getUserQueueStatus(Long userId) {
+        Optional<QueueToken> activeTokenOpt = getActiveTokenForUser(userId);
+        if (activeTokenOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        QueueToken activeToken = activeTokenOpt.get();
+        Counter counter = activeToken.getCounter();
+        if (counter == null) {
+            return Optional.of(buildUserQueueStatus(activeToken, null, 0));
+        }
+
+        List<QueueToken> counterTokens = queueRepository.findByCounterId(counter.getId());
+
+        Optional<QueueToken> nowServingOpt = counterTokens.stream()
+                .filter(token -> token.getStatus() == QueueStatus.IN_CONSULTATION || token.getStatus() == QueueStatus.SERVED)
+                .max(Comparator.comparingLong(QueueToken::getId));
+
+        int peopleAhead = (int) counterTokens.stream()
+                .filter(token -> token.getStatus() == QueueStatus.WAITING || token.getStatus() == QueueStatus.IN_CONSULTATION)
+                .filter(token -> token.getTokenNumber() < activeToken.getTokenNumber())
+                .count();
+
+        return Optional.of(buildUserQueueStatus(activeToken, nowServingOpt.orElse(null), peopleAhead));
+    }
+
+    private UserQueueStatus buildUserQueueStatus(QueueToken activeToken, QueueToken nowServingToken, int peopleAhead) {
+        String counterName = activeToken.getCounter() != null ? activeToken.getCounter().getCounterName() : "Counter";
+        String yourToken = counterName + "-" + String.format("%03d", activeToken.getTokenNumber());
+        String nowServing = nowServingToken == null
+                ? "-"
+                : (nowServingToken.getCounter() != null ? nowServingToken.getCounter().getCounterName() : "Counter")
+                        + "-" + String.format("%03d", nowServingToken.getTokenNumber());
+
+        int sanitizedPeopleAhead = Math.max(0, peopleAhead);
+        return new UserQueueStatus(
+                activeToken.getId(),
+                yourToken,
+                nowServing,
+                sanitizedPeopleAhead,
+                sanitizedPeopleAhead * AVG_CONSULTATION_MINUTES,
+                activeToken.getStatus().name(),
+                counterName,
+                activeToken.getServiceType());
+    }
+
+    public Map<String, Object> getAdminOverview() {
+        List<Counter> counters = counterRepository.findAll();
+
+        long totalWaiting = queueRepository.countByStatus(QueueStatus.WAITING);
+        long activeCounters = counters.stream().filter(counter -> counter.getStatus() == CounterStatus.OPEN).count();
+        long activeDoctors = counters.stream()
+                .filter(counter -> counter.getStatus() == CounterStatus.OPEN)
+                .map(Counter::getStaff)
+                .filter(staff -> staff != null && staff.getId() != null)
+                .map(User::getId)
+                .distinct()
+                .count();
+
+        String currentlyServingToken = queueRepository
+                .findFirstByStatusInOrderByIdDesc(Set.of(QueueStatus.IN_CONSULTATION, QueueStatus.SERVED))
+                .map(this::formatDisplayToken)
+                .orElse("-");
+
+        List<CounterDashboardItem> counterItems = counters.stream()
+                .map(counter -> {
+                    long assignedPatients = queueRepository.countByCounterIdAndStatusIn(
+                            counter.getId(),
+                            Set.of(QueueStatus.WAITING, QueueStatus.IN_CONSULTATION));
+                    String currentServing = queueRepository
+                            .findFirstByCounterIdAndStatusInOrderByIdDesc(
+                                    counter.getId(),
+                                    Set.of(QueueStatus.IN_CONSULTATION, QueueStatus.SERVED))
+                            .map(this::formatDisplayToken)
+                            .orElse("-");
+                    Long doctorId = counter.getStaff() != null ? counter.getStaff().getId() : null;
+                    String doctorName = counter.getStaff() != null ? counter.getStaff().getName() : null;
+                    return new CounterDashboardItem(
+                            counter.getId(),
+                            counter.getCounterName(),
+                            counter.getServiceType(),
+                            counter.getStatus().name(),
+                            doctorId,
+                            doctorName,
+                            assignedPatients,
+                            currentServing);
+                })
+                .toList();
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("totalWaitingPatients", totalWaiting);
+        payload.put("currentlyServingToken", currentlyServingToken);
+        payload.put("activeCounters", activeCounters);
+        payload.put("activeDoctors", activeDoctors);
+        payload.put("counters", counterItems);
+        return payload;
+    }
+
+    private String formatDisplayToken(QueueToken token) {
+        String prefix = token.getCounter() != null && token.getCounter().getCounterName() != null
+                ? token.getCounter().getCounterName()
+                : "Counter";
+        return prefix + "-" + String.format("%03d", token.getTokenNumber());
     }
 }
