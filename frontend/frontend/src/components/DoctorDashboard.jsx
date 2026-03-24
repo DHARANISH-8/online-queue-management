@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './DoctorDashboard.css';
+import BrandLogo from './BrandLogo';
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -141,7 +142,8 @@ const DoctorDashboard = ({ user, onLogout }) => {
     return (
         <div className="doctor-dashboard">
             <header className="doctor-header">
-                <div>
+                <div className="doctor-header-left">
+                    <BrandLogo compact className="doctor-brand" />
                     <h1>Consultation Dashboard</h1>
                     <p>Manage patient consultations and live queue updates.</p>
                 </div>

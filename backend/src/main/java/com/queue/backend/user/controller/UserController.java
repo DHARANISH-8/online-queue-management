@@ -19,10 +19,10 @@ public class UserController {
         this.userService = userService;
     }
 
-    record UserRequest(String name, String email, String phone, String role, String password) {
+    record UserRequest(String name, String email, String phone, String role, String password, String specialty) {
     }
 
-    record UserResponse(Long id, String name, String email, String phone, String role, Boolean active) {
+    record UserResponse(Long id, String name, String email, String phone, String role, String specialty, Boolean active) {
     }
 
     @GetMapping
@@ -35,6 +35,11 @@ public class UserController {
         return userService.getUsersByRole(role).stream().map(this::toResponse).toList();
     }
 
+    @GetMapping("/doctors")
+    public List<UserResponse> getDoctorsBySpecialty(@RequestParam(required = false) String specialty) {
+        return userService.getDoctorsBySpecialty(specialty).stream().map(this::toResponse).toList();
+    }
+
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody UserRequest request) {
         try {
@@ -43,7 +48,8 @@ public class UserController {
                     request.email(),
                     request.phone(),
                     request.role(),
-                    request.password());
+                    request.password(),
+                    request.specialty());
             return ResponseEntity.ok(toResponse(created));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -59,7 +65,8 @@ public class UserController {
                     request.email(),
                     request.phone(),
                     request.role(),
-                    request.password());
+                    request.password(),
+                    request.specialty());
             return ResponseEntity.ok(toResponse(updated));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -91,6 +98,7 @@ public class UserController {
                 user.getEmail(),
                 user.getPhone(),
                 user.getRole(),
+                user.getSpecialty(),
                 user.getActive());
     }
 }

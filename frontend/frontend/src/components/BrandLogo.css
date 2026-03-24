@@ -1,0 +1,57 @@
+.apollo-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.apollo-brand-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.apollo-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+.apollo-brand-title {
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--theme-text);
+}
+
+.apollo-brand-subtitle {
+    font-size: 0.95rem;
+    color: var(--theme-text-muted);
+}
+
+.apollo-brand.compact .apollo-brand-logo {
+    width: 40px;
+    height: 40px;
+}
+
+.apollo-brand.compact .apollo-brand-title {
+    font-size: 1.2rem;
+}
+
+.apollo-brand.compact .apollo-brand-subtitle {
+    font-size: 0.72rem;
+}
+
+@media (max-width: 768px) {
+    .apollo-brand-logo {
+        width: 44px;
+        height: 44px;
+    }
+
+    .apollo-brand-title {
+        font-size: 1.5rem;
+    }
+
+    .apollo-brand-subtitle {
+        font-size: 0.78rem;
+    }
+}

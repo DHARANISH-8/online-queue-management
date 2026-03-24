@@ -3,7 +3,8 @@ import './CounterManagement.css';
 
 const CounterManagement = () => {
     const [counters, setCounters] = useState([]);
-    const [doctors, setDoctors] = useState([]);
+    const [newCounterDoctors, setNewCounterDoctors] = useState([]);
+    const [editCounterDoctors, setEditCounterDoctors] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +38,6 @@ const CounterManagement = () => {
 
     useEffect(() => {
         fetchCounters();
-        fetchDoctors();
     }, []);
 
     useEffect(() => {
@@ -58,25 +58,35 @@ const CounterManagement = () => {
         }
     };
 
-    const fetchDoctors = async () => {
+    const fetchDoctorsBySpecialty = async (specialty, setDoctorState) => {
         try {
-            const [doctorRes, staffRes] = await Promise.all([
-                fetch('/api/users/role/DOCTOR'),
-                fetch('/api/users/role/STAFF')
-            ]);
-
-            const doctorData = doctorRes.ok ? await doctorRes.json() : [];
-            const staffData = staffRes.ok ? await staffRes.json() : [];
-            const merged = [...doctorData, ...staffData];
-            const uniqueDoctors = merged.filter((item, index, self) => (
-                self.findIndex((u) => u.id === item.id) === index
-            ));
-            setDoctors(uniqueDoctors);
+            const params = new URLSearchParams();
+            if (specialty) {
+                params.append('specialty', specialty);
+            }
+            const response = await fetch(`/api/users/doctors?${params.toString()}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch doctors');
+            }
+            const data = await response.json();
+            setDoctorState(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching doctors:', err);
-            setDoctors([]);
+            setDoctorState([]);
         }
     };
+
+    useEffect(() => {
+        if (showAddModal) {
+            fetchDoctorsBySpecialty(newCounter.serviceType, setNewCounterDoctors);
+        }
+    }, [showAddModal, newCounter.serviceType]);
+
+    useEffect(() => {
+        if (showEditModal) {
+            fetchDoctorsBySpecialty(editCounter.serviceType, setEditCounterDoctors);
+        }
+    }, [showEditModal, editCounter.serviceType]);
 
 
 
@@ -255,7 +265,7 @@ const CounterManagement = () => {
                     <option>Open</option>
                     <option>Closed</option>
                 </select>
-                <button className="btn-add-counter" onClick={() => setShowAddModal(true)}>
+                <button className="btn-add-counter" onClick={() => { setError(''); setShowAddModal(true); }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -265,7 +275,7 @@ const CounterManagement = () => {
             </div>
 
             {isLoading ? (
-                <div style={{ textAlign: 'center', padding: '3rem' }}>Loading counters...</div>
+                <div className="counter-loading">Loading counters...</div>
             ) : (
                 <div className="table-container">
                     <table className="counter-table">
@@ -321,7 +331,7 @@ const CounterManagement = () => {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                                    <td colSpan="7" className="counter-empty">
                                         No counters found. Create one to get started.
                                     </td>
                                 </tr>
@@ -338,7 +348,7 @@ const CounterManagement = () => {
                             <h3>Add New Counter</h3>
                             <button className="close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
                         </div>
-                        {error && <div style={{ color: '#dc2626', marginBottom: '0.75rem' }}>{error}</div>}
+                        {error && <div className="counter-error">{error}</div>}
                         <form onSubmit={handleAddCounter}>
                             <div className="form-group">
                                 <label>Counter Name</label>
@@ -354,7 +364,7 @@ const CounterManagement = () => {
                                 <label>Department / Specialty</label>
                                 <select
                                     value={newCounter.serviceType}
-                                    onChange={(e) => setNewCounter({ ...newCounter, serviceType: e.target.value })}
+                                    onChange={(e) => setNewCounter({ ...newCounter, serviceType: e.target.value, doctorId: '' })}
                                 >
                                     {medicalSpecialties.map((specialty) => (
                                         <option key={specialty} value={specialty}>{specialty}</option>
@@ -368,10 +378,10 @@ const CounterManagement = () => {
                                     value={newCounter.doctorId}
                                     onChange={(e) => setNewCounter({ ...newCounter, doctorId: e.target.value })}
                                 >
-                                    <option value="">Choose doctor</option>
-                                    {doctors.map((doctor) => (
+                                    <option value="">{newCounterDoctors.length ? 'Choose doctor' : 'No doctors available for this specialty'}</option>
+                                    {newCounterDoctors.map((doctor) => (
                                         <option key={doctor.id} value={doctor.id}>
-                                            {doctor.name} ({doctor.email})
+                                            {doctor.name} ({doctor.email}) - {doctor.specialty}
                                         </option>
                                     ))}
                                 </select>
@@ -393,7 +403,7 @@ const CounterManagement = () => {
                             <h3>Edit Counter</h3>
                             <button className="close-btn" onClick={() => setShowEditModal(false)}>&times;</button>
                         </div>
-                        {error && <div style={{ color: '#dc2626', marginBottom: '0.75rem' }}>{error}</div>}
+                        {error && <div className="counter-error">{error}</div>}
                         <form onSubmit={handleUpdateCounter}>
                             <div className="form-group">
                                 <label>Counter Name</label>
@@ -408,7 +418,7 @@ const CounterManagement = () => {
                                 <label>Department / Specialty</label>
                                 <select
                                     value={editCounter.serviceType}
-                                    onChange={(e) => setEditCounter({ ...editCounter, serviceType: e.target.value })}
+                                    onChange={(e) => setEditCounter({ ...editCounter, serviceType: e.target.value, doctorId: '' })}
                                 >
                                     {medicalSpecialties.map((specialty) => (
                                         <option key={specialty} value={specialty}>{specialty}</option>
@@ -422,10 +432,10 @@ const CounterManagement = () => {
                                     value={editCounter.doctorId}
                                     onChange={(e) => setEditCounter({ ...editCounter, doctorId: e.target.value })}
                                 >
-                                    <option value="">Choose doctor</option>
-                                    {doctors.map((doctor) => (
+                                    <option value="">{editCounterDoctors.length ? 'Choose doctor' : 'No doctors available for this specialty'}</option>
+                                    {editCounterDoctors.map((doctor) => (
                                         <option key={doctor.id} value={doctor.id}>
-                                            {doctor.name} ({doctor.email})
+                                            {doctor.name} ({doctor.email}) - {doctor.specialty}
                                         </option>
                                     ))}
                                 </select>

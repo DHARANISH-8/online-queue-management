@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './AdminDashboard.css';
 import CounterManagement from './CounterManagement';
 import UserManagement from './UserManagement';
+import BrandLogo from './BrandLogo';
 
 const AdminDashboard = ({ user, onLogout }) => {
     const medicalSpecialties = [
@@ -40,9 +41,9 @@ const AdminDashboard = ({ user, onLogout }) => {
 
     useEffect(() => {
         if (showTokenModal) {
-            fetchDoctors();
+            fetchDoctors(tokenForm.serviceType);
         }
-    }, [showTokenModal]);
+    }, [showTokenModal, tokenForm.serviceType]);
 
     useEffect(() => {
         fetchOverview();
@@ -71,25 +72,24 @@ const AdminDashboard = ({ user, onLogout }) => {
     };
 
     const stats = [
-        { id: 1, label: 'Patients Waiting', value: String(overview.totalWaitingPatients), trend: 'Live queue count', trendUp: null, iconBg: '#fff7ed', iconColor: '#f97316' },
-        { id: 2, label: 'Currently Serving', value: overview.currentlyServingToken || '-', trend: 'Latest active token', trendUp: null, iconBg: '#eff6ff', iconColor: '#2563eb' },
-        { id: 3, label: 'Active Counters', value: String(overview.activeCounters), trend: 'Open consultation points', trendUp: null, iconBg: '#f0fdf4', iconColor: '#10b981' },
-        { id: 4, label: 'Active Doctors', value: String(overview.activeDoctors), trend: 'Doctors with open counters', trendUp: null, iconBg: '#fef2f2', iconColor: '#ef4444' },
+        { id: 1, label: 'Patients Waiting', value: String(overview.totalWaitingPatients), trend: 'Live queue count', trendUp: null, iconBg: 'var(--theme-warning-soft)', iconColor: 'var(--theme-warning)' },
+        { id: 2, label: 'Currently Serving', value: overview.currentlyServingToken || '-', trend: 'Latest active token', trendUp: null, iconBg: 'var(--theme-primary-soft)', iconColor: 'var(--theme-primary)' },
+        { id: 3, label: 'Active Counters', value: String(overview.activeCounters), trend: 'Open consultation points', trendUp: null, iconBg: 'var(--theme-success-soft)', iconColor: 'var(--theme-success)' },
+        { id: 4, label: 'Active Doctors', value: String(overview.activeDoctors), trend: 'Doctors with open counters', trendUp: null, iconBg: 'var(--theme-danger-soft)', iconColor: 'var(--theme-danger)' },
     ];
 
-    const fetchDoctors = async () => {
+    const fetchDoctors = async (specialty) => {
         try {
-            const [doctorRes, staffRes] = await Promise.all([
-                fetch('/api/users/role/DOCTOR'),
-                fetch('/api/users/role/STAFF')
-            ]);
-            const doctorData = doctorRes.ok ? await doctorRes.json() : [];
-            const staffData = staffRes.ok ? await staffRes.json() : [];
-            const merged = [...doctorData, ...staffData];
-            const uniqueById = merged.filter((item, index, self) => (
-                self.findIndex((u) => u.id === item.id) === index
-            ));
-            setDoctors(uniqueById);
+            const params = new URLSearchParams();
+            if (specialty) {
+                params.append('specialty', specialty);
+            }
+            const response = await fetch(`/api/users/doctors?${params.toString()}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch doctors');
+            }
+            const data = await response.json();
+            setDoctors(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching doctors:', err);
             setDoctors([]);
@@ -135,10 +135,7 @@ const AdminDashboard = ({ user, onLogout }) => {
         <div className={`admin-dashboard ${darkMode ? 'dark' : ''}`}>
             <aside className="sidebar">
                 <div className="sidebar-logo">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                    <span>ApolloQ</span>
+                    <BrandLogo compact />
                 </div>
 
                 <nav className="sidebar-nav">
@@ -166,7 +163,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <span className="user-name">{user?.name || 'James Admin'}</span>
                         <span className="user-role">{user?.role || 'ADMIN'}</span>
                     </div>
-                    <button onClick={onLogout} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                    <button onClick={onLogout} className="admin-logout-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                     </button>
                 </div>
@@ -202,7 +199,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                                 <h2>Dashboard Overview</h2>
                                 <p>Real-time queue monitoring for administrators.</p>
                             </div>
-                            {overviewError && <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{overviewError}</p>}
+                            {overviewError && <p className="dashboard-error">{overviewError}</p>}
                             <div className="stats-grid">
                                 {stats.map((stat) => (
                                     <div key={stat.id} className="stat-card">
@@ -269,22 +266,12 @@ const AdminDashboard = ({ user, onLogout }) => {
                     )}
                     {view === 'counters' && <CounterManagement />}
                     {view === 'queues' && (
-                        <div style={{ padding: '2rem' }}>
-                            <h2 style={{ marginBottom: '0.5rem' }}>Queue & Token Creation</h2>
-                            <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                        <div className="admin-section-card">
+                            <h2>Queue & Token Creation</h2>
+                            <p>
                                 Create tokens from admin panel and assign the requested doctor.
                             </p>
-                            <button
-                                onClick={() => setShowTokenModal(true)}
-                                style={{
-                                    padding: '0.6rem 1rem',
-                                    backgroundColor: 'var(--primary-color)',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer'
-                                }}
-                            >
+                            <button onClick={() => setShowTokenModal(true)} className="theme-primary-btn">
                                 Create New Token
                             </button>
                         </div>
@@ -294,42 +281,28 @@ const AdminDashboard = ({ user, onLogout }) => {
             </main>
 
             {showTokenModal && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: 'rgba(15, 23, 42, 0.45)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        width: '100%',
-                        maxWidth: '520px',
-                        background: 'white',
-                        borderRadius: '12px',
-                        padding: '1.25rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h3 style={{ margin: 0 }}>Create Token</h3>
+                <div className="admin-modal-overlay">
+                    <div className="admin-modal-card">
+                        <div className="admin-modal-header">
+                            <h3>Create Token</h3>
                             <button
                                 onClick={() => {
                                     setShowTokenModal(false);
                                     setTokenError('');
                                     setTokenSuccess('');
                                 }}
-                                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer' }}
+                                className="admin-icon-button"
                             >
                                 x
                             </button>
                         </div>
 
-                        {tokenError && <div style={{ color: '#dc2626', marginBottom: '0.75rem' }}>{tokenError}</div>}
-                        {tokenSuccess && <div style={{ color: '#16a34a', marginBottom: '0.75rem' }}>{tokenSuccess}</div>}
+                        {tokenError && <div className="dashboard-error">{tokenError}</div>}
+                        {tokenSuccess && <div className="dashboard-success">{tokenSuccess}</div>}
 
                         <form onSubmit={handleCreateToken}>
-                            <div style={{ marginBottom: '0.85rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.35rem' }}>Patient User ID</label>
+                            <div className="dashboard-form-row">
+                                <label>Patient User ID</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -337,16 +310,16 @@ const AdminDashboard = ({ user, onLogout }) => {
                                     value={tokenForm.userId}
                                     onChange={(e) => setTokenForm({ ...tokenForm, userId: e.target.value })}
                                     placeholder="Enter customer user ID"
-                                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                                    className="dashboard-form-control"
                                 />
                             </div>
 
-                            <div style={{ marginBottom: '0.85rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.35rem' }}>Department / Specialty</label>
+                            <div className="dashboard-form-row">
+                                <label>Department / Specialty</label>
                                 <select
                                     value={tokenForm.serviceType}
-                                    onChange={(e) => setTokenForm({ ...tokenForm, serviceType: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                                    onChange={(e) => setTokenForm({ ...tokenForm, serviceType: e.target.value, doctorId: '' })}
+                                    className="dashboard-form-control"
                                 >
                                     {medicalSpecialties.map((specialty) => (
                                         <option key={specialty} value={specialty}>{specialty}</option>
@@ -354,36 +327,28 @@ const AdminDashboard = ({ user, onLogout }) => {
                                 </select>
                             </div>
 
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.35rem' }}>Which doctor do you want?</label>
+                            <div className="dashboard-form-row">
+                                <label>Which doctor do you want?</label>
                                 <select
                                     required
                                     value={tokenForm.doctorId}
                                     onChange={(e) => setTokenForm({ ...tokenForm, doctorId: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                                    className="dashboard-form-control"
                                 >
-                                    <option value="">Select doctor</option>
+                                    <option value="">{doctors.length ? 'Select doctor' : 'No doctors available for selected specialty'}</option>
                                     {doctors.map((doctor) => (
                                         <option key={doctor.id} value={doctor.id}>
-                                            {doctor.name} ({doctor.email})
+                                            {doctor.name} ({doctor.email}) - {doctor.specialty}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowTokenModal(false)}
-                                    style={{ padding: '0.55rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer' }}
-                                >
+                            <div className="dashboard-form-actions">
+                                <button type="button" onClick={() => setShowTokenModal(false)} className="theme-secondary-btn">
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={isCreatingToken}
-                                    style={{ padding: '0.55rem 0.9rem', borderRadius: '8px', border: 'none', background: '#0f766e', color: 'white', cursor: 'pointer' }}
-                                >
+                                <button type="submit" disabled={isCreatingToken} className="theme-primary-btn-small">
                                     {isCreatingToken ? 'Creating...' : 'Create Token'}
                                 </button>
                             </div>

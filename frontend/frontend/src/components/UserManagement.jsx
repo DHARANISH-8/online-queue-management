@@ -1,14 +1,30 @@
 import React, { useEffect, useState } from 'react';
+import './UserManagement.css';
 
 const ROLE_OPTIONS = ['ADMIN', 'DOCTOR', 'PATIENT'];
+const SPECIALTY_OPTIONS = [
+    'General Medicine',
+    'Cardiology',
+    'Neurology',
+    'Orthopedics',
+    'Pediatrics',
+    'Dermatology',
+    'ENT',
+    'Ophthalmology',
+    'Gynecology',
+    'Dentistry'
+];
 
 const emptyForm = {
     name: '',
     email: '',
     phone: '',
     role: 'PATIENT',
+    specialty: '',
     password: ''
 };
+
+const PAGE_SIZE = 8;
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -19,6 +35,7 @@ const UserManagement = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [submitting, setSubmitting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         fetchUsers();
@@ -32,6 +49,7 @@ const UserManagement = () => {
             }
             const data = await response.json();
             setUsers(Array.isArray(data) ? data : []);
+            setCurrentPage(1);
             setError('');
         } catch (err) {
             setError(err.message || 'Failed to fetch users');
@@ -55,6 +73,7 @@ const UserManagement = () => {
             email: user.email || '',
             phone: user.phone || '',
             role: user.role === 'CUSTOMER' ? 'PATIENT' : (user.role || 'PATIENT'),
+            specialty: user.specialty || '',
             password: ''
         });
         setError('');
@@ -75,7 +94,8 @@ const UserManagement = () => {
                 name: form.name,
                 email: form.email,
                 phone: form.phone,
-                role: form.role
+                role: form.role,
+                specialty: form.role === 'DOCTOR' || form.role === 'STAFF' ? form.specialty : null
             };
             if (isCreate || form.password.trim()) {
                 payload.password = form.password;
@@ -117,64 +137,65 @@ const UserManagement = () => {
         }
     };
 
+    const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+    const safePage = Math.min(currentPage, totalPages);
+    const startIndex = (safePage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    const paginatedUsers = users.slice(startIndex, endIndex);
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
     return (
-        <div style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div className="user-management">
+            <div className="user-management-header">
                 <div>
-                    <h2 style={{ marginBottom: '0.4rem' }}>User Management</h2>
-                    <p style={{ color: 'var(--text-muted)' }}>Create, update, and deactivate user accounts.</p>
+                    <h2>User Management</h2>
+                    <p>Create, update, and deactivate user accounts.</p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    style={{ padding: '0.6rem 1rem', border: 'none', borderRadius: '8px', background: '#0f766e', color: '#fff', cursor: 'pointer' }}
-                >
+                <button onClick={openCreateModal} className="user-primary-btn">
                     Add User
                 </button>
             </div>
 
-            {error && <div style={{ color: '#dc2626', marginBottom: '0.75rem' }}>{error}</div>}
-            {success && <div style={{ color: '#16a34a', marginBottom: '0.75rem' }}>{success}</div>}
+            {error && <div className="user-alert error">{error}</div>}
+            {success && <div className="user-alert success">{success}</div>}
 
             {loading ? (
-                <div>Loading users...</div>
+                <div className="user-loading">Loading users...</div>
             ) : (
-                <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="user-table-wrap">
+                    <table className="user-table">
                         <thead>
-                            <tr style={{ background: '#f8fafc' }}>
-                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>Name</th>
-                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>Email</th>
-                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>Role</th>
-                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>Status</th>
-                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>Actions</th>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Specialty</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map((user) => (
-                                <tr key={user.id} style={{ borderTop: '1px solid #e2e8f0' }}>
-                                    <td style={{ padding: '0.8rem' }}>{user.name}</td>
-                                    <td style={{ padding: '0.8rem' }}>{user.email}</td>
-                                    <td style={{ padding: '0.8rem' }}>{user.role === 'CUSTOMER' ? 'PATIENT' : user.role}</td>
-                                    <td style={{ padding: '0.8rem', color: user.active ? '#16a34a' : '#dc2626', fontWeight: 600 }}>
+                            {paginatedUsers.map((user) => (
+                                <tr key={user.id}>
+                                    <td>{user.name}</td>
+                                    <td>{user.email}</td>
+                                    <td>{user.role === 'CUSTOMER' ? 'PATIENT' : user.role}</td>
+                                    <td>{user.specialty || '-'}</td>
+                                    <td className={`user-status ${user.active ? 'active' : 'inactive'}`}>
                                         {user.active ? 'ACTIVE' : 'INACTIVE'}
                                     </td>
-                                    <td style={{ padding: '0.8rem', display: 'flex', gap: '0.5rem' }}>
-                                        <button
-                                            onClick={() => openEditModal(user)}
-                                            style={{ padding: '0.35rem 0.65rem', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff', cursor: 'pointer' }}
-                                        >
+                                    <td className="user-actions">
+                                        <button onClick={() => openEditModal(user)} className="user-edit-btn">
                                             Edit
                                         </button>
                                         <button
                                             onClick={() => toggleUserStatus(user)}
-                                            style={{
-                                                padding: '0.35rem 0.65rem',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                background: user.active ? '#ef4444' : '#16a34a',
-                                                color: '#fff',
-                                                cursor: 'pointer'
-                                            }}
+                                            className={`user-toggle-btn ${user.active ? 'active' : 'inactive'}`}
                                         >
                                             {user.active ? 'Deactivate' : 'Activate'}
                                         </button>
@@ -183,7 +204,7 @@ const UserManagement = () => {
                             ))}
                             {users.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" style={{ padding: '1rem', textAlign: 'center', color: '#64748b' }}>
+                                    <td colSpan="6" className="user-empty">
                                         No users found.
                                     </td>
                                 </tr>
@@ -193,77 +214,117 @@ const UserManagement = () => {
                 </div>
             )}
 
+            {!loading && users.length > 0 && (
+                <div className="user-pagination">
+                    <span className="user-summary">
+                        Showing {startIndex + 1}-{Math.min(endIndex, users.length)} of {users.length}
+                    </span>
+                    <div className="user-pagination-controls">
+                        <button
+                            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                            disabled={safePage === 1}
+                            className="user-page-btn"
+                        >
+                            Previous
+                        </button>
+                        <span className="user-pagination-status">Page {safePage} of {totalPages}</span>
+                        <button
+                            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                            disabled={safePage === totalPages}
+                            className="user-page-btn"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: 'rgba(15, 23, 42, 0.45)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1100
-                }}>
-                    <div style={{ width: '100%', maxWidth: '520px', background: '#fff', borderRadius: '12px', padding: '1.25rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h3 style={{ margin: 0 }}>{editingUser ? 'Edit User' : 'Create User'}</h3>
-                            <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer' }}>x</button>
+                <div className="user-modal-overlay">
+                    <div className="user-modal-card">
+                        <div className="user-modal-header">
+                            <h3>{editingUser ? 'Edit User' : 'Create User'}</h3>
+                            <button onClick={() => setShowModal(false)} className="user-icon-btn">x</button>
                         </div>
                         <form onSubmit={handleSubmit}>
-                            <div style={{ marginBottom: '0.8rem' }}>
+                            <div className="user-form-row">
                                 <label>Name</label>
                                 <input
                                     required
                                     value={form.name}
                                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                                    className="user-form-control"
                                 />
                             </div>
-                            <div style={{ marginBottom: '0.8rem' }}>
+                            <div className="user-form-row">
                                 <label>Email</label>
                                 <input
                                     type="email"
                                     required
                                     value={form.email}
                                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                                    className="user-form-control"
                                 />
                             </div>
-                            <div style={{ marginBottom: '0.8rem' }}>
+                            <div className="user-form-row">
                                 <label>Phone</label>
                                 <input
                                     required
                                     value={form.phone}
                                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                                    className="user-form-control"
                                 />
                             </div>
-                            <div style={{ marginBottom: '0.8rem' }}>
+                            <div className="user-form-row">
                                 <label>Role</label>
                                 <select
                                     value={form.role}
-                                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                                    onChange={(e) => {
+                                        const selectedRole = e.target.value;
+                                        setForm({
+                                            ...form,
+                                            role: selectedRole,
+                                            specialty: selectedRole === 'DOCTOR' || selectedRole === 'STAFF'
+                                                ? (form.specialty || SPECIALTY_OPTIONS[0])
+                                                : ''
+                                        });
+                                    }}
+                                    className="user-form-control"
                                 >
                                     {ROLE_OPTIONS.map((role) => (
                                         <option key={role} value={role}>{role}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div style={{ marginBottom: '1rem' }}>
+                            {(form.role === 'DOCTOR' || form.role === 'STAFF') && (
+                                <div className="user-form-row">
+                                    <label>Specialty</label>
+                                    <select
+                                        value={form.specialty}
+                                        onChange={(e) => setForm({ ...form, specialty: e.target.value })}
+                                        className="user-form-control"
+                                    >
+                                        {SPECIALTY_OPTIONS.map((specialty) => (
+                                            <option key={specialty} value={specialty}>{specialty}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                            <div className="user-form-row">
                                 <label>{editingUser ? 'Password (optional to change)' : 'Password'}</label>
                                 <input
                                     type="password"
                                     required={!editingUser}
                                     value={form.password}
                                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                    style={{ width: '100%', padding: '0.55rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                                    className="user-form-control"
                                 />
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem' }}>
-                                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.55rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}>
+                            <div className="user-form-actions">
+                                <button type="button" onClick={() => setShowModal(false)} className="user-cancel-btn">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={submitting} style={{ padding: '0.55rem 0.9rem', borderRadius: '8px', border: 'none', background: '#0f766e', color: '#fff', cursor: 'pointer' }}>
+                                <button type="submit" disabled={submitting} className="user-submit-btn">
                                     {submitting ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}
                                 </button>
                             </div>

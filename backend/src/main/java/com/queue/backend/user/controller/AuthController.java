@@ -15,7 +15,7 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    record AuthUserResponse(Long id, String name, String email, String phone, String role, Boolean active) {
+    record AuthUserResponse(Long id, String name, String email, String phone, String role, String specialty, Boolean active) {
     }
 
     @PostMapping("/register")
@@ -47,6 +47,7 @@ public class AuthController {
                 user.getEmail(),
                 user.getPhone(),
                 user.getRole(),
+                user.getSpecialty(),
                 user.getActive());
     }
 }

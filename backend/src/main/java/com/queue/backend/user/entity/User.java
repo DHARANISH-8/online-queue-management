@@ -22,6 +22,9 @@ public class User {
     @Column(nullable = false)
     private String role; // ADMIN, DOCTOR, CUSTOMER
 
+    @Column(nullable = true, length = 100)
+    private String specialty;
+
     @Column(nullable = false)
     private Boolean active = true;
 
@@ -77,6 +80,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 
     public Boolean getActive() {

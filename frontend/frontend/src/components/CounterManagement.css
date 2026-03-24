@@ -20,13 +20,13 @@
 .doctor-notification {
     margin-bottom: 1rem;
     padding: 0.85rem 1rem;
-    border: 1px solid #bbf7d0;
-    background: linear-gradient(180deg, #f8fffb 0%, #f0fdf4 100%);
-    color: #166534;
+    border: 1px solid #bcdcc8;
+    background: var(--theme-success-soft);
+    color: var(--theme-success);
     border-radius: 12px;
     font-size: 0.875rem;
     font-weight: 500;
-    box-shadow: 0 8px 20px rgba(22, 101, 52, 0.08);
+    box-shadow: var(--theme-shadow-soft);
 }
 
 .doctor-notification-title {
@@ -54,7 +54,8 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     font-size: 0.875rem;
-    background-color: var(--white);
+    background-color: var(--theme-surface-strong);
+    color: var(--text-main);
 }
 
 .search-icon {
@@ -70,7 +71,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     font-size: 0.875rem;
-    background-color: var(--white);
+    background-color: var(--theme-surface-strong);
     color: var(--text-main);
     cursor: pointer;
 }
@@ -109,7 +110,7 @@
 }
 
 .counter-table th {
-    background-color: #f8fafc;
+    background-color: rgba(110, 151, 124, 0.08);
     padding: 1rem 1.5rem;
     font-size: 0.75rem;
     font-weight: 600;
@@ -200,42 +201,41 @@
 }
 
 .action-btn:hover {
-    background-color: #f1f5f9;
+    background-color: var(--theme-primary-soft);
     color: var(--text-main);
 }
 
 .action-btn.delete:hover {
-    background-color: #fee2e2;
-    color: #ef4444;
-    border-color: #fecaca;
+    background-color: var(--theme-danger-soft);
+    color: var(--theme-danger);
+    border-color: #f1c4c1;
 }
 
 .action-btn.open:hover {
-    background-color: #dcfce7;
-    color: #22c55e;
-    border-color: #bbf7d0;
+    background-color: var(--theme-success-soft);
+    color: var(--theme-success);
+    border-color: #bcdcc8;
 }
 
 .action-btn.serve:hover {
-    background-color: #dbeafe;
-    color: #3b82f6;
-    border-color: #bfdbfe;
+    background-color: var(--theme-primary-soft);
+    color: var(--theme-primary);
+    border-color: var(--theme-border-strong);
 }
 
 .action-btn.close:hover {
-    background-color: #fef3c7;
-    color: #f59e0b;
-    border-color: #fde68a;
+    background-color: var(--theme-warning-soft);
+    color: var(--theme-warning);
+    border-color: #ead7b5;
 }
 
-/* Modal Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(58, 63, 52, 0.3);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -244,11 +244,11 @@
 }
 
 .modal-content {
-    background: white;
+    background: var(--theme-surface-strong);
     width: 100%;
     max-width: 450px;
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    box-shadow: var(--theme-shadow);
     animation: modalFadeIn 0.2s ease-out;
 }
 
@@ -318,7 +318,7 @@
 .form-group input:focus,
 .form-group select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(110, 151, 124, 0.14);
 }
 
 .modal-footer {
@@ -330,7 +330,7 @@
 
 .btn-secondary {
     padding: 0.625rem 1.25rem;
-    background: white;
+    background: var(--theme-surface-strong);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     color: var(--text-main);
@@ -353,8 +353,19 @@
     background: var(--primary-hover);
 }
 
-/* Dark Mode Modal */
 .admin-dashboard.dark .modal-content {
     background: var(--bg-sidebar);
     color: var(--text-main);
+}
+
+.counter-loading,
+.counter-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.counter-error {
+    margin: 0 1.5rem 0.75rem;
+    color: #a95250;
 }

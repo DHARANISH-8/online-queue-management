@@ -6,11 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class UserService {
+    private static final List<String> DOCTOR_ROLES = List.of("DOCTOR", "STAFF");
+    private static final Map<String, String> SPECIALTY_LOOKUP = buildSpecialtyLookup();
 
     @Autowired
     private UserRepository userRepository;
@@ -22,8 +27,9 @@ public class UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email already taken");
         }
-        // Self-registration is limited to patient accounts.
-        user.setRole("CUSTOMER");
+        String normalizedRole = normalizeRole(user.getRole());
+        user.setRole(normalizedRole);
+        user.setSpecialty(normalizeSpecialtyForRole(normalizedRole, user.getSpecialty()));
         user.setActive(true);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
@@ -51,7 +57,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User createUser(String name, String email, String phone, String role, String password) {
+    public User createUser(String name, String email, String phone, String role, String password, String specialty) {
         if (email == null || email.isBlank()) {
             throw new RuntimeException("Email is required");
         }
@@ -62,13 +68,15 @@ public class UserService {
             throw new RuntimeException("Email already taken");
         }
 
-        User user = new User(name, email, phone, normalizeRole(role));
+        String normalizedRole = normalizeRole(role);
+        User user = new User(name, email, phone, normalizedRole);
+        user.setSpecialty(normalizeSpecialtyForRole(normalizedRole, specialty));
         user.setPassword(passwordEncoder.encode(password));
         user.setActive(true);
         return userRepository.save(user);
     }
 
-    public User updateUser(Long id, String name, String email, String phone, String role, String password) {
+    public User updateUser(Long id, String name, String email, String phone, String role, String password, String specialty) {
         if (id == null) {
             throw new RuntimeException("User ID is required");
         }
@@ -88,8 +96,15 @@ public class UserService {
         if (phone != null && !phone.isBlank()) {
             user.setPhone(phone);
         }
+        String effectiveRole = user.getRole();
         if (role != null && !role.isBlank()) {
-            user.setRole(normalizeRole(role));
+            effectiveRole = normalizeRole(role);
+            user.setRole(effectiveRole);
+        }
+        if (specialty != null || "DOCTOR".equalsIgnoreCase(effectiveRole) || "STAFF".equalsIgnoreCase(effectiveRole)) {
+            user.setSpecialty(normalizeSpecialtyForRole(effectiveRole, specialty != null ? specialty : user.getSpecialty()));
+        } else {
+            user.setSpecialty(null);
         }
         if (password != null && !password.isBlank()) {
             user.setPassword(passwordEncoder.encode(password));
@@ -107,6 +122,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public List<User> getDoctorsBySpecialty(String specialty) {
+        if (specialty == null || specialty.isBlank()) {
+            return userRepository.findByRoleIn(DOCTOR_ROLES);
+        }
+        String normalizedSpecialty = normalizeSpecialty(specialty);
+        return userRepository.findByRoleInAndSpecialtyIgnoreCase(DOCTOR_ROLES, normalizedSpecialty);
+    }
+
     private String normalizeRole(String role) {
         String normalized = role == null ? "" : role.trim().toUpperCase();
         if ("PATIENT".equals(normalized) || "USER".equals(normalized)) {
@@ -117,5 +140,41 @@ public class UserService {
             return normalized;
         }
         throw new RuntimeException("Invalid role. Allowed: ADMIN, DOCTOR, PATIENT");
+    }
+
+    private String normalizeSpecialtyForRole(String role, String specialty) {
+        String normalizedRole = role == null ? "" : role.trim().toUpperCase();
+        if (!"DOCTOR".equals(normalizedRole) && !"STAFF".equals(normalizedRole)) {
+            return null;
+        }
+        return normalizeSpecialty(specialty);
+    }
+
+    private String normalizeSpecialty(String specialty) {
+        String normalized = specialty == null ? "" : specialty.trim().toLowerCase();
+        String canonical = SPECIALTY_LOOKUP.get(normalized);
+        if (canonical == null) {
+            throw new RuntimeException("Invalid specialty");
+        }
+        return canonical;
+    }
+
+    private static Map<String, String> buildSpecialtyLookup() {
+        List<String> specialties = Arrays.asList(
+                "General Medicine",
+                "Cardiology",
+                "Neurology",
+                "Orthopedics",
+                "Pediatrics",
+                "Dermatology",
+                "ENT",
+                "Ophthalmology",
+                "Gynecology",
+                "Dentistry");
+        Map<String, String> lookup = new LinkedHashMap<>();
+        for (String specialty : specialties) {
+            lookup.put(specialty.toLowerCase(), specialty);
+        }
+        return lookup;
     }
 }

@@ -58,6 +58,7 @@ public class CounterService {
         if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
             throw new RuntimeException("Selected user is not a doctor");
         }
+        validateDoctorSpecialty(doctor, serviceType);
 
         Counter counter = new Counter(
                 counterName,
@@ -203,10 +204,33 @@ public class CounterService {
             if (!"DOCTOR".equals(role) && !"STAFF".equals(role)) {
                 throw new RuntimeException("Selected user is not a doctor");
             }
+            validateDoctorSpecialty(doctor, counter.getServiceType());
             counter.setStaff(doctor);
         }
 
+        if (counter.getStaff() != null) {
+            validateDoctorSpecialty(counter.getStaff(), counter.getServiceType());
+        }
+
         return counterRepository.save(counter);
+    }
+
+    private void validateDoctorSpecialty(User doctor, String serviceType) {
+        String requested = normalizeValue(serviceType);
+        String doctorSpecialty = normalizeValue(doctor.getSpecialty());
+        if (requested.isBlank()) {
+            throw new RuntimeException("Service type is required");
+        }
+        if (doctorSpecialty.isBlank()) {
+            throw new RuntimeException("Selected doctor is not mapped to any specialty");
+        }
+        if (!requested.equalsIgnoreCase(doctorSpecialty)) {
+            throw new RuntimeException("Selected doctor is not mapped to " + serviceType);
+        }
+    }
+
+    private String normalizeValue(String value) {
+        return value == null ? "" : value.trim();
     }
 
     // Get unique service types - returns default services if no counters exist

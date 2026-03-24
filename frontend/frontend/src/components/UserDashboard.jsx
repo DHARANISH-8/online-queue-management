@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './UserDashboard.css';
+import BrandLogo from './BrandLogo';
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -126,10 +127,7 @@ const UserDashboard = ({ user, onLogout }) => {
             {/* Sidebar */}
             <aside className="sidebar">
                 <div className="sidebar-header">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                    <span>ApolloQ</span>
+                    <BrandLogo compact />
                 </div>
 
                 <nav className="sidebar-nav">
@@ -223,7 +221,7 @@ const UserDashboard = ({ user, onLogout }) => {
                                 </svg>
                                 {activeToken ? 'Already in Queue' : openCounters.length === 0 ? 'No Open Counters' : 'Take Token'}
                             </button>
-                            {queueError && <p style={{ color: '#b91c1c', marginTop: '0.75rem' }}>{queueError}</p>}
+                            {queueError && <p className="queue-error">{queueError}</p>}
                         </div>
                     </div>
 
@@ -267,7 +265,7 @@ const UserDashboard = ({ user, onLogout }) => {
                             </button>
                         </div>
                     ) : (
-                        <div className="card empty-token-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontStyle: 'italic' }}>
+                        <div className="card empty-token-card">
                             <p>You don't have any active tokens.</p>
                         </div>
                     )}

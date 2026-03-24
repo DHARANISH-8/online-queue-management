@@ -1,16 +1,40 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light;
-  color: #213547;
-  background-color: #ffffff;
-
+  color: #2a3441;
+  background-color: #fcfaf5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --theme-bg:
+    radial-gradient(circle at top left, rgba(191, 215, 190, 0.38), transparent 28%),
+    radial-gradient(circle at top right, rgba(224, 205, 179, 0.24), transparent 22%),
+    linear-gradient(180deg, #fcfaf5 0%, #f8f4ec 100%);
+  --theme-surface: rgba(255, 255, 255, 0.74);
+  --theme-surface-strong: #fffdf9;
+  --theme-panel: rgba(255, 252, 247, 0.9);
+  --theme-border: #d8dfd2;
+  --theme-border-strong: #c6d1c2;
+  --theme-text: #263141;
+  --theme-text-muted: #667085;
+  --theme-text-soft: #7a8796;
+  --theme-primary: #6e977c;
+  --theme-primary-strong: #5d836a;
+  --theme-primary-soft: rgba(110, 151, 124, 0.12);
+  --theme-secondary-soft: rgba(216, 177, 124, 0.18);
+  --theme-danger: #c75b5b;
+  --theme-danger-soft: #fdf0ef;
+  --theme-success: #2f7d57;
+  --theme-success-soft: #edf8f0;
+  --theme-warning: #9a7247;
+  --theme-warning-soft: #f8edd9;
+  --theme-shadow: 0 24px 60px rgba(126, 133, 113, 0.12);
+  --theme-shadow-soft: 0 12px 28px rgba(126, 133, 113, 0.08);
+  --theme-radius: 18px;
+  --theme-radius-sm: 12px;
 }
 
 body {
@@ -18,13 +42,22 @@ body {
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: var(--theme-text);
+  background: var(--theme-bg);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+* {
+  box-sizing: border-box;
 }
 
 button {
   cursor: pointer;
+  font: inherit;
+}
+
+a,
+button,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
 }
