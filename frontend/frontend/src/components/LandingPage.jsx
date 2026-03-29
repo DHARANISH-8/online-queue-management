@@ -30,6 +30,68 @@ const featureCards = [
 
 const navItems = ['How it Works', 'Departments', 'Find a Doctor', 'Support'];
 
+const howItWorksSteps = [
+  {
+    title: 'Create your account',
+    description: 'Sign in once to manage bookings, queue status, and visit updates from one place.',
+  },
+  {
+    title: 'Choose a department or doctor',
+    description: 'Find the right specialty, pick a doctor, and reserve an available consultation slot.',
+  },
+  {
+    title: 'Track your token live',
+    description: 'Get real-time queue progress so you only arrive when your turn is getting close.',
+  },
+];
+
+const departmentCards = [
+  {
+    title: 'Cardiology',
+    description: 'Heart consultations, diagnostics, and follow-up care with queue-aware booking.',
+  },
+  {
+    title: 'Orthopedics',
+    description: 'Bone, joint, spine, and sports injury support with faster visit planning.',
+  },
+  {
+    title: 'General Medicine',
+    description: 'Everyday physician consultations with simple walk-in and scheduled token handling.',
+  },
+  {
+    title: 'Pediatrics',
+    description: 'Child-focused care with smoother appointments and reduced waiting time for families.',
+  },
+];
+
+const supportDetails = {
+  email: 'support@apolloq.com',
+  phoneLabel: '+91 98765 43210',
+  phoneHref: 'tel:+919876543210',
+};
+
+function getNavLinkProps(item, onLogin) {
+  if (item === 'Find a Doctor') {
+    return {
+      href: '#',
+      onClick: (event) => {
+        event.preventDefault();
+        onLogin();
+      },
+    };
+  }
+
+  if (item === 'How it Works') {
+    return { href: '#how-it-works' };
+  }
+
+  if (item === 'Departments') {
+    return { href: '#departments' };
+  }
+
+  return { href: '#support' };
+}
+
 function Icon({ type }) {
   if (type === 'calendar') {
     return (
@@ -74,7 +136,7 @@ function LandingPage({ onBookNow, onLogin }) {
           <BrandLogo compact />
           <nav className="landing-nav">
             {navItems.map((item) => (
-              <a key={item} href="#features">
+              <a key={item} {...getNavLinkProps(item, onLogin)}>
                 {item}
               </a>
             ))}
@@ -100,9 +162,9 @@ function LandingPage({ onBookNow, onLogin }) {
               <button className="hero-primary" type="button" onClick={onBookNow}>
                 Book Now
               </button>
-              <button className="hero-secondary" type="button" onClick={onLogin}>
+              <a className="hero-secondary" href="#how-it-works">
                 Learn More
-              </button>
+              </a>
             </div>
             <div className="hero-proof">
               <div className="hero-avatars" aria-hidden="true">
@@ -170,6 +232,64 @@ function LandingPage({ onBookNow, onLogin }) {
             ))}
           </div>
         </section>
+
+        <section className="info-section" id="how-it-works">
+          <div className="section-heading section-heading-left">
+            <h2>How it works</h2>
+            <p>
+              apolloQ keeps the visit simple from booking to arrival, so patients spend less time
+              waiting and more time getting care.
+            </p>
+          </div>
+
+          <div className="steps-grid">
+            {howItWorksSteps.map((step, index) => (
+              <article key={step.title} className="info-card">
+                <span className="info-index">0{index + 1}</span>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="info-section" id="departments">
+          <div className="section-heading section-heading-left">
+            <h2>Departments</h2>
+            <p>
+              Browse key specialties before you sign in, then continue to login when you want to
+              find a doctor and book your visit.
+            </p>
+          </div>
+
+          <div className="department-grid">
+            {departmentCards.map((department) => (
+              <article key={department.title} className="info-card department-card">
+                <h3>{department.title}</h3>
+                <p>{department.description}</p>
+                <button type="button" className="department-link" onClick={onLogin}>
+                  Find a Doctor
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <footer className="support-section" id="support">
+          <div className="support-copy">
+            <span className="support-label">Support</span>
+            <h2>Need help before your visit?</h2>
+            <p>
+              Contact the apolloQ support team for login help, booking assistance, or queue status
+              questions.
+            </p>
+          </div>
+
+          <div className="support-links">
+            <a href={`mailto:${supportDetails.email}`}>{supportDetails.email}</a>
+            <a href={supportDetails.phoneHref}>{supportDetails.phoneLabel}</a>
+          </div>
+        </footer>
       </div>
     </div>
   );

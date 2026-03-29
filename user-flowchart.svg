@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1840" viewBox="0 0 1400 1840">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6fbff" />
+      <stop offset="100%" stop-color="#eef4ff" />
+    </linearGradient>
+    <linearGradient id="header" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f4c81" />
+      <stop offset="100%" stop-color="#1e6aa8" />
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#355c7d" />
+    </marker>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #ffffff; }
+      .subtitle { font: 500 16px 'Segoe UI', Arial, sans-serif; fill: #dcecff; }
+      .section { font: 700 24px 'Segoe UI', Arial, sans-serif; fill: #12344d; }
+      .body { font: 500 18px 'Segoe UI', Arial, sans-serif; fill: #193549; }
+      .small { font: 500 15px 'Segoe UI', Arial, sans-serif; fill: #35556d; }
+      .box { fill: #ffffff; stroke: #c6d8ea; stroke-width: 2; rx: 20; ry: 20; }
+      .start { fill: #daf5e8; stroke: #6db38c; stroke-width: 2; rx: 28; ry: 28; }
+      .decision { fill: #fff3d8; stroke: #d8ab38; stroke-width: 2; }
+      .end { fill: #ffe2e2; stroke: #cf6c6c; stroke-width: 2; rx: 28; ry: 28; }
+      .arrow { stroke: #355c7d; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+      .ghost { fill: #f7fbff; stroke: #d7e4f0; stroke-width: 2; rx: 18; ry: 18; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="1840" fill="url(#bg)" />
+  <rect x="70" y="40" width="1260" height="120" rx="26" fill="url(#header)" />
+  <text x="700" y="92" text-anchor="middle" class="title">Online Queue Management System</text>
+  <text x="700" y="126" text-anchor="middle" class="subtitle">User Flowchart for Patient / Customer Journey</text>
+
+  <text x="700" y="210" text-anchor="middle" class="section">Patient Flow</text>
+
+  <rect x="500" y="250" width="400" height="84" class="start" />
+  <text x="700" y="300" text-anchor="middle" class="body">Start</text>
+
+  <rect x="420" y="390" width="560" height="96" class="box" />
+  <text x="700" y="432" text-anchor="middle" class="body">Open Landing Page</text>
+  <text x="700" y="460" text-anchor="middle" class="small">User visits apolloQ website/application</text>
+
+  <polygon points="700,550 860,650 700,750 540,650" class="decision" />
+  <text x="700" y="645" text-anchor="middle" class="body">Already</text>
+  <text x="700" y="673" text-anchor="middle" class="body">Registered?</text>
+
+  <rect x="150" y="820" width="420" height="108" class="box" />
+  <text x="360" y="865" text-anchor="middle" class="body">Sign Up</text>
+  <text x="360" y="895" text-anchor="middle" class="small">Enter name, email, phone, password, role</text>
+
+  <rect x="830" y="820" width="420" height="108" class="box" />
+  <text x="1040" y="865" text-anchor="middle" class="body">Login</text>
+  <text x="1040" y="895" text-anchor="middle" class="small">Enter email and password</text>
+
+  <polygon points="700,1010 860,1110 700,1210 540,1110" class="decision" />
+  <text x="700" y="1105" text-anchor="middle" class="body">Login</text>
+  <text x="700" y="1133" text-anchor="middle" class="body">Successful?</text>
+
+  <rect x="900" y="1280" width="320" height="100" class="end" />
+  <text x="1060" y="1332" text-anchor="middle" class="body">Show Error / Retry</text>
+
+  <rect x="430" y="1280" width="540" height="108" class="box" />
+  <text x="700" y="1322" text-anchor="middle" class="body">Open User Dashboard</text>
+  <text x="700" y="1352" text-anchor="middle" class="small">System loads open counters and active token status</text>
+
+  <polygon points="700,1450 860,1550 700,1650 540,1550" class="decision" />
+  <text x="700" y="1545" text-anchor="middle" class="body">Active Token</text>
+  <text x="700" y="1573" text-anchor="middle" class="body">Exists?</text>
+
+  <rect x="120" y="1710" width="430" height="98" class="box" />
+  <text x="335" y="1752" text-anchor="middle" class="body">Join Queue</text>
+  <text x="335" y="1780" text-anchor="middle" class="small">Select open counter and click "Take Token"</text>
+
+  <rect x="850" y="1710" width="430" height="98" class="box" />
+  <text x="1065" y="1752" text-anchor="middle" class="body">View Current Token</text>
+  <text x="1065" y="1780" text-anchor="middle" class="small">Check token number, now serving, wait time, people ahead</text>
+
+  <rect x="120" y="1910" width="1160" height="0" fill="none" />
+
+  <rect x="120" y="1830" width="1160" height="0" fill="none" />
+
+  <path d="M700 334 L700 390" class="arrow" />
+  <path d="M700 486 L700 550" class="arrow" />
+
+  <path d="M540 650 L360 650 L360 820" class="arrow" />
+  <text x="385" y="636" class="small">No</text>
+
+  <path d="M860 650 L1040 650 L1040 820" class="arrow" />
+  <text x="1010" y="636" class="small">Yes</text>
+
+  <path d="M360 928 L360 960 L700 960 L700 1010" class="arrow" />
+  <path d="M1040 928 L1040 960 L700 960 L700 1010" class="arrow" />
+
+  <path d="M540 1110 L430 1110 L430 1330 L430 1334" class="arrow" />
+  <text x="458" y="1098" class="small">Yes</text>
+
+  <path d="M860 1110 L1060 1110 L1060 1280" class="arrow" />
+  <text x="1030" y="1098" class="small">No</text>
+
+  <path d="M1060 1380 L1060 1420 L700 1420 L700 1010" class="arrow" />
+  <text x="1078" y="1410" class="small">Retry</text>
+
+  <path d="M700 1388 L700 1450" class="arrow" />
+
+  <path d="M540 1550 L335 1550 L335 1710" class="arrow" />
+  <text x="360" y="1538" class="small">No</text>
+
+  <path d="M860 1550 L1065 1550 L1065 1710" class="arrow" />
+  <text x="1035" y="1538" class="small">Yes</text>
+
+  <rect x="120" y="1880" width="1160" height="120" class="ghost" />
+  <text x="700" y="1920" text-anchor="middle" class="body">After Joining Queue</text>
+  <text x="700" y="1950" text-anchor="middle" class="small">System generates token, sends confirmation email, and shows live queue status</text>
+  <text x="700" y="1978" text-anchor="middle" class="small">User can wait, track status refresh, or cancel token if needed</text>
+
+  <path d="M335 1808 L335 1940 L620 1940" class="arrow" />
+  <path d="M1065 1808 L1065 1940 L780 1940" class="arrow" />
+
+  <rect x="500" y="2030" width="400" height="84" class="end" />
+  <text x="700" y="2080" text-anchor="middle" class="body">End</text>
+
+  <path d="M700 2000 L700 2030" class="arrow" />
+</svg>
