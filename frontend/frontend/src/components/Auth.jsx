@@ -96,11 +96,17 @@ const Auth = ({ initialMode = 'login', onBack, onLogin }) => {
     };
 
     const handleLogin = async () => {
+        // Normalize email to lowercase for consistency
+        const normalizedEmail = email.trim().toLowerCase();
+        
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('http://localhost:8083/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({
+                    email: normalizedEmail,
+                    password: password
+                }),
             });
             const data = await response.json();
 
@@ -114,9 +120,10 @@ const Auth = ({ initialMode = 'login', onBack, onLogin }) => {
                 return;
             }
 
-            setError(data.message || 'Login failed.');
+            // Show detailed error messages from backend
+            setError(data.message || 'Login failed. Please try again.');
         } catch {
-            setError('Network error. Please try again.');
+            setError('Network error. Please check your connection and try again.');
         }
     };
 

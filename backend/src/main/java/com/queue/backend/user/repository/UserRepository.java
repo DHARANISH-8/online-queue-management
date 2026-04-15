@@ -9,11 +9,14 @@ import com.queue.backend.user.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);
+    // 🔐 Login
+    Optional<User> findByEmailIgnoreCase(String email);
 
-    boolean existsByEmail(String email);
+    // ✅ Validation
+    boolean existsByEmailIgnoreCase(String email);
 
-    java.util.List<User> findByRole(String role);
+    // 👥 Role-based queries
+    List<User> findByRole(String role);
 
     List<User> findByRoleIn(List<String> roles);
 

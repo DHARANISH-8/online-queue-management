@@ -24,7 +24,7 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     public User registerUser(User user) {
-        if (userRepository.existsByEmail(user.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(user.getEmail())) {
             throw new RuntimeException("Email already taken");
         }
         String normalizedRole = normalizeRole(user.getRole());
@@ -36,17 +36,25 @@ public class UserService {
     }
 
     public User loginUser(String email, String password) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (Boolean.FALSE.equals(user.getActive())) {
-                throw new RuntimeException("Account is deactivated. Contact administrator.");
-            }
-            if (passwordEncoder.matches(password, user.getPassword())) {
-                return user;
-            }
+        // Use case-insensitive email lookup
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("No account found with this email. Please sign up.");
         }
-        throw new RuntimeException("Invalid credentials");
+        
+        User user = userOpt.get();
+        
+        // Check if account is deactivated
+        if (Boolean.FALSE.equals(user.getActive())) {
+            throw new RuntimeException("Account is deactivated. Contact administrator.");
+        }
+        
+        // Check password
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Incorrect password.");
+        }
+        
+        return user;
     }
 
     public List<User> getUsersByRole(String role) {
@@ -64,7 +72,7 @@ public class UserService {
         if (password == null || password.isBlank()) {
             throw new RuntimeException("Password is required");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new RuntimeException("Email already taken");
         }
 
@@ -83,7 +91,7 @@ public class UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
         if (email != null && !email.isBlank() && !email.equalsIgnoreCase(user.getEmail())) {
-            Optional<User> byEmail = userRepository.findByEmail(email);
+            Optional<User> byEmail = userRepository.findByEmailIgnoreCase(email);
             if (byEmail.isPresent() && !byEmail.get().getId().equals(id)) {
                 throw new RuntimeException("Email already taken");
             }
