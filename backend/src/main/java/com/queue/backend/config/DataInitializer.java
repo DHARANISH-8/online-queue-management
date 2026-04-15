@@ -24,7 +24,7 @@ public class DataInitializer {
     CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             // Seed Admin if not exists
-            if (!userRepository.existsByEmail("admin@qflow.com")) {
+            if (!userRepository.existsByEmailIgnoreCase("admin@qflow.com")) {
                 User admin = new User("System Admin", "admin@qflow.com", "1234567890", "ADMIN");
                 admin.setPassword(passwordEncoder.encode(seedAdminPassword));
                 userRepository.save(admin);
@@ -42,7 +42,7 @@ public class DataInitializer {
     }
 
     private void seedDoctor(UserRepository userRepository, PasswordEncoder passwordEncoder, DoctorSeed doctorSeed) {
-        Optional<User> existing = userRepository.findByEmail(doctorSeed.email());
+        Optional<User> existing = userRepository.findByEmailIgnoreCase(doctorSeed.email());
         if (existing.isPresent()) {
             User doctor = existing.get();
             boolean updated = false;
