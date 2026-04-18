@@ -21,6 +21,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/**").permitAll() // TEMPORARY: Allow all API for testing
+                        .requestMatchers("/").permitAll()
                         .anyRequest().authenticated());
         return http.build();
     }
